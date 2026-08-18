@@ -334,7 +334,7 @@
   <section class="open-sign">
     <div class="open-head">
       <span class="neon">今夜开门营业</span>
-      <span class="sub">连续光顾 <span class="streak" id="streak">1</span> 晚 · 积分 <span class="streak" id="streakPoints">100</span><span class="badge-chip" id="badgeChip" style="display:none"><span class="b-emoji" id="badgeEmoji">🍺</span><span id="badgeName"></span></span></span>
+      <span class="sub">连续光顾 <span class="streak" id="streak">1</span> 晚<span class="badge-chip" id="badgeChip" style="display:none"><span class="b-emoji" id="badgeEmoji">🍺</span><span id="badgeName"></span></span></span>
     </div>
     <div class="open-body">
       <p class="tip">这几桩心事还压在心里，今晚要不要试着放下？</p>
@@ -625,7 +625,7 @@ function pointsAdd(n,label){
   ledgerAdd(label||(n>0?"积分奖励":"消费"),(n>0?"+"+n:String(n)),c);
   return c;
 }
-function renderPoints(){var p=el("points");if(p){var num=p.querySelector(".num");if(num)num.textContent=pointsGet()}var sp=el("streakPoints");if(sp)sp.textContent=pointsGet()}
+function renderPoints(){var p=el("points");if(p){var num=p.querySelector(".num");if(num)num.textContent=pointsGet()}}
 function dailyBonus(){var k="wb_ebar_daily";var today=todayStr();try{var last=localStorage.getItem(k);if(last!==today){pointsAdd(10,"每日光顾");try{localStorage.setItem(k,today)}catch(e){}toast("每日光顾 +10 积分")}}catch(e){}}
 
 /* 酒柜收藏 */

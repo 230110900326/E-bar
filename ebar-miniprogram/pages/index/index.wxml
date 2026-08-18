@@ -8,7 +8,6 @@
     </view>
     <view class="hero-sub">
       <text class="hero-pill">连续光顾 <text class="hl">{{streak}}</text> 晚<text wx:if="{{badge}}" class="badge-chip">{{badge.emoji}} {{badge.name}}{{badgeNext}}</text></text>
-      <text class="pts">积分 {{points}}</text>
     </view>
     <view wx:if="{{undone > 0}}" class="hero-warn">还有 {{undone}} 桩心事没释怀，点一下让它过去 →</view>
   </view>
