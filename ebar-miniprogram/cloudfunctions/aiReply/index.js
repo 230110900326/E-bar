@@ -1,6 +1,8 @@
-// 云函数 aiReply：调用大模型生成针对性酒保回信
-// 部署前在「云函数 > aiReply > 配置 > 环境变量」填入 DEEPSEEK_API_KEY（DeepSeek 注册免费获取）
-const API_KEY = process.env.DEEPSEEK_API_KEY || "";
+// 云函数 aiReply：调用腾讯混元大模型（hy3）生成针对性酒保回信
+// 部署前在「云函数 > aiReply > 配置 > 环境变量」填入 HUNYUAN_API_KEY（腾讯云混元 token）
+const API_KEY = process.env.HUNYUAN_API_KEY || "";
+const ENDPOINT = "https://tokenhub-intl.tencentmaas.com/v1/chat/completions";
+const MODEL = "hy3";
 
 const KW = {
   "加班|工作|老板|工资|实习|KPI|离职": "加班到这么晚，你已经扛了很久了。允许自己今晚什么都不做，把自己还给自己。",
@@ -26,14 +28,14 @@ exports.main = async (event) => {
   if (!text) return { reply: "" };
   if (!API_KEY) return { reply: fallback(text) };
   try {
-    const resp = await fetch("https://api.deepseek.com/chat/completions", {
+    const resp = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + API_KEY
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: MODEL,
         messages: [
           {
             role: "system",
@@ -41,13 +43,14 @@ exports.main = async (event) => {
           },
           { role: "user", content: text }
         ],
-        temperature: 0.9
+        stream: false
       })
     });
     const j = await resp.json();
     const reply = j.choices && j.choices[0] && j.choices[0].message.content;
     return { reply: reply || fallback(text) };
   } catch (e) {
+    console.error("hunyuan error", e);
     return { reply: fallback(text) };
   }
 };
