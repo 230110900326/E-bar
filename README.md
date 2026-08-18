@@ -2,6 +2,9 @@
 
 一间没有酒的酒吧，装着你卸下的疲惫。按心情调酒、向酒保倾诉、记录微醺日记、画自己的心情曲线。
 
+> **当前形态：网页版为主**（GitHub Pages 托管，改代码自动同步更新）
+> `ebar-miniprogram/` 小程序版保留在仓库作为历史存档，不再维护。
+
 ## 🌐 在线体验（GitHub Pages）
 
 > 打开即用，手机电脑都可以
@@ -12,10 +15,9 @@
 
 ```
 E-bar/
-├── ebar.html              # 网页版（单文件，零依赖，离线可用）
-├── ebar-miniprogram/      # 微信小程序版（原生小程序 + 云开发）
-│   ├── pages/             # index 首页 / shelf 酒柜 / stats 心情数据 / me 我的
-│   └── cloudfunctions/    # aiReply 云函数（DeepSeek 针对性回信）
+├── ebar.html              # 网页版（单文件，零依赖，离线可用）★ 主版本
+├── index.html             # GitHub Pages 入口 → 自动跳转 ebar.html
+├── ebar-miniprogram/      # 微信小程序版（历史存档，不再维护）
 └── overview.md            # 搭建与迭代记录
 ```
 
