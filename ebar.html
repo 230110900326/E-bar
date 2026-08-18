@@ -546,6 +546,8 @@ var LS_KEY = "wb_ebar_cache_v1";
 var SEED_KEY = "wb_ebar_seeded";
 var SHELF_KEY = "wb_ebar_shelf_v1";
 var CNT_KEY = "wb_ebar_drinkcnt_v1";
+/* AI 酒保代理：填 Cloudflare Worker URL（结尾不带 /），留空则用本地关键词兜底 */
+var BARTENDER_PROXY = "";
 /* 离线兜底示例数据（云端不可用时本地初始化用） */
 var SAMPLE_DATA = [
   {id:"sample_1",type:"解忧留言",mood:"疲惫",content:"周一加班到深夜，觉得自己像个机器",cure:"辛苦了，机器也会做梦的。今晚就做个好梦吧。",score:3,drink:"",status:"未释怀",date:"2026-08-17"},
@@ -1191,13 +1193,31 @@ window.delItem=async function(id){
   openModal("删除这条记录？","删掉就找不回来了，确定吗？",async function(){await delRec(id);renderAll();toast("已删除")});
 };
 
+/* AI 酒保：调 Cloudflare Worker 代理走混元，失败/未配走关键词兜底 */
+async function askBartender(text){
+  if(!BARTENDER_PROXY){return matchCure(text)}
+  try{
+    var ctrl=new AbortController();var tid=setTimeout(function(){ctrl.abort()},8000);
+    var resp=await fetch(BARTENDER_PROXY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text}),signal:ctrl.signal});
+    clearTimeout(tid);
+    if(!resp.ok)throw new Error("http "+resp.status);
+    var j=await resp.json();
+    if(j&&j.reply)return j.reply;
+    throw new Error("empty");
+  }catch(e){
+    return matchCure(text);
+  }
+}
+
 async function sendTalk(){
   var v=el("talkInput").value.trim();
   if(!v){toast("先写点什么吧");return}
-  var cure=matchCure(v);
   el("talkSend").disabled=true;
+  var orig=el("talkSend").innerHTML;
+  el("talkSend").innerHTML="酒保思考中…";
+  var cure=await askBartender(v);
   await addRec({"类型":{"select":"解忧留言"},"心事内容":{"text":v},"治愈回信":{"text":cure},"状态":{"select":"未释怀"},"日期":{"date":todayStr()}});
-  el("talkInput").value="";el("talkSend").disabled=false;
+  el("talkInput").value="";el("talkSend").disabled=false;el("talkSend").innerHTML=orig;
   renderAll();pointsAdd(5,"投递烦恼");toast("投递烦恼 +5 积分，酒保回信已送达");
 }
 async function sendDiary(){
