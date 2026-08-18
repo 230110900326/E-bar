@@ -266,6 +266,8 @@
     border-left:2px solid var(--amber);font-size:13px;color:var(--ink-2);font-style:italic}
   .item-foot{display:flex;align-items:center;gap:10px;margin-top:11px}
   .score-pill{font-size:12px;color:var(--amber-soft);font-weight:600}
+  .more-btn{width:100%;margin-top:14px;padding:12px;border-radius:11px;border:1px dashed var(--amber-glow);background:rgba(232,163,61,.07);color:var(--amber-soft);font-size:13px;cursor:pointer;transition:.2s}
+  .more-btn:hover{background:rgba(232,163,61,.15)}
   .mini-btn{font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);
     background:var(--card-2);color:var(--ink-2);transition:.2s;margin-left:auto}
   .mini-btn:hover{color:var(--amber-soft);border-color:var(--amber-glow)}
@@ -752,12 +754,32 @@ function talkItem(r){
   return '<div class="item'+(owe?" unresolved":"")+'"><div class="item-head">'+chip+'<span class="item-date">'+fmtDate(r.date)+'</span></div><div class="item-txt">'+esc(r.content)+'</div>'+cure+'<div class="item-foot">'+btn+'</div></div>';
 }
 
+/* 微醺时间轴：分页，每页 5 条，滚动加载更多 */
+var DIARY_PAGE=5;
+var diaryPage=0;
+function diaryList(){return ALL.filter(function(r){return r.type==="微醺日记"})}
 function renderDiary(){
-  var list=ALL.filter(function(r){return r.type==="微醺日记"});
+  var list=diaryList();
   var box=el("diaryFeed");
   if(list.length===0){box.innerHTML=emptySVG("还没有微醺的记录","今晚记下第一杯吧");return}
-  box.innerHTML=list.map(diaryItem).join("");
+  diaryPage=0;
+  renderDiaryPage(list);
 }
+function renderDiaryPage(list){
+  var box=el("diaryFeed");
+  var end=Math.min(list.length,(diaryPage+1)*DIARY_PAGE);
+  var html=list.slice(0,end).map(diaryItem).join("");
+  if(list.length>end){
+    html+='<button class="more-btn" onclick="moreDiary()">加载更多（还有 '+(list.length-end)+' 条）</button>';
+  }
+  box.innerHTML=html;
+}
+window.moreDiary=function(){
+  diaryPage++;
+  renderDiaryPage(diaryList());
+  var b=document.querySelector(".more-btn");
+  if(b)b.scrollIntoView({behavior:"smooth",block:"center"});
+};
 function diaryItem(r){
   var chip='<span class="chip chip-diary">日记</span>';
   if(r.mood)chip+='<span class="chip chip-mood">'+esc(r.mood)+'</span>';

@@ -30,9 +30,12 @@
     <view class="card">
       <view wx:if="{{diaries.length === 0}}" class="trend-empty">还没有微醺记录</view>
       <view wx:else class="timeline">
-        <view wx:for="{{diaries}}" wx:key="id" class="tl-item">
+        <view wx:for="{{shownDiaries}}" wx:key="id" class="tl-item">
           <text class="tl-date">{{item.date}}</text>
           <text class="tl-text">{{item.content}}{{item.drink ? ' · 喝了 ' + item.drink : ''}} · 心情 {{item.score}}</text>
+        </view>
+        <view wx:if="{{hasMore}}" class="more-wrap" bindtap="showMoreDiary">
+          <text class="more-btn">加载更多（还有 {{moreCount}} 条）</text>
         </view>
       </view>
     </view>

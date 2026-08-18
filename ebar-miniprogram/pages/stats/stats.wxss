@@ -28,3 +28,5 @@
 .tl-item{margin-bottom:16rpx;padding-bottom:16rpx;border-bottom:1rpx dashed var(--line);}
 .tl-date{font-size:22rpx;color:var(--amber-soft);display:block;}
 .tl-text{font-size:25rpx;color:var(--ink-2);display:block;margin-top:6rpx;line-height:1.5;}
+.more-wrap{margin-top:24rpx;text-align:center;}
+.more-btn{font-size:24rpx;color:var(--amber-soft);border:1rpx dashed var(--amber-glow);border-radius:40rpx;padding:14rpx 60rpx;display:inline-block;background:rgba(232,163,61,0.07);}

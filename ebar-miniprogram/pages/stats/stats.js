@@ -7,7 +7,11 @@ Page({
     loading: true,
     total: 0, avg: 0, max: 0, released: 0, owe: 0, streak: 1,
     trendPoints: [],
-    diaries: []
+    diaries: [],
+    shownDiaries: [],   // 分页后当前展示的日记
+    hasMore: false,
+    moreCount: 0,
+    _page: 5            // 每页条数
   },
 
   onShow() {
@@ -39,11 +43,38 @@ Page({
       this.setData({
         total, avg, max, released, owe, streak: this._streak || 1,
         trendPoints: trend, diaries, loading: false
-      }, () => this.drawTrend());
+      }, () => {
+        this.drawTrend();
+        this.applyPage();
+      });
     } catch (e) {
       console.error("stats load", e);
       this.setData({ loading: false });
     }
+  },
+
+  /* 分页：默认显示前 _page 条 */
+  applyPage() {
+    const page = this.data._page || 5;
+    const list = this.data.diaries || [];
+    const shownDiaries = list.slice(0, page);
+    this.setData({
+      shownDiaries,
+      hasMore: list.length > page,
+      moreCount: list.length - page
+    });
+  },
+
+  /* 加载更多 */
+  showMoreDiary() {
+    const page = this.data._page || 5;
+    const shown = this.data.shownDiaries.length + page;
+    const list = this.data.diaries || [];
+    this.setData({
+      shownDiaries: list.slice(0, shown),
+      hasMore: list.length > shown,
+      moreCount: Math.max(0, list.length - shown)
+    });
   },
 
   drawTrend() {
