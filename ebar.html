@@ -141,11 +141,12 @@
 .how-label{display:inline-block;font-size:11px;color:#7fd0bc;font-weight:600;margin-right:8px;padding:2px 8px;background:rgba(61,139,122,.20);border-radius:6px;vertical-align:1px}
 .steps-label{font-size:11px;color:var(--ink-3);margin-top:13px;margin-bottom:7px}
   /* 今日推荐 */
-  .today-card{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(232,163,61,.14),rgba(123,60,180,.10));border:1px solid var(--amber-glow);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+  .today-card{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(232,163,61,.14),rgba(123,60,180,.10));border:1px solid var(--amber-glow);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;flex-wrap:wrap}
   .today-emoji{font-size:38px;flex-shrink:0}
-  .today-info{flex:1;min-width:0}
-  .today-top{display:flex;align-items:center;gap:8px}
-  .today-badge{font-size:11px;color:#1a1020;background:var(--amber);font-weight:700;padding:2px 9px;border-radius:20px}
+  .today-info{flex:1;min-width:160px}
+  .today-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .today-badge{font-size:11px;color:#1a1020;background:var(--amber);font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+  .today-en{font-size:11px;color:var(--ink-3);margin-top:1px;flex:1;min-width:0;line-height:1.5}
   .today-cn{font-family:var(--serif);font-size:18px;color:var(--amber-soft);margin-top:7px}
   .today-en{font-size:11px;color:var(--ink-3);margin-top:1px}
   .today-why{font-size:12px;color:var(--ink-2);margin-top:7px;line-height:1.6}
