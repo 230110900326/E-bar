@@ -1,0 +1,18 @@
+/* app.wxss 全局样式 */
+page {
+  --bg: #0d0a13;
+  --bg2: #150f1f;
+  --card: rgba(255, 255, 255, 0.05);
+  --line: rgba(232, 163, 61, 0.22);
+  --amber: #e8a359;
+  --amber-soft: #f5c879;
+  --amber-glow: rgba(232, 163, 61, 0.18);
+  --ink: #f4ecff;
+  --ink-2: #c9bfe0;
+  --ink-3: rgba(180, 170, 215, 0.9);
+  --green: #4ade80;
+  background: radial-gradient(1200rpx 600rpx at 50% -10%, #2a1140 0%, var(--bg) 55%);
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  min-height: 100vh;
+}

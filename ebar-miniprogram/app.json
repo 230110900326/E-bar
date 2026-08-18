@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/shelf/shelf",
+    "pages/stats/stats",
+    "pages/me/me"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#0d0a13",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "夜半微醺 · 电子酒吧",
+    "backgroundColor": "#0d0a13",
+    "enablePullDownRefresh": false
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

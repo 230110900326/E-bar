@@ -1,0 +1,34 @@
+<!-- pages/shelf/shelf.wxml -->
+<view class="wrap">
+
+  <view wx:if="{{loading}}" class="loading">酒柜加载中…</view>
+
+  <block wx:elif="{{shelf.length === 0}}">
+    <view class="empty-box">
+      <text class="empty-emoji">🍾</text>
+      <text class="empty-title">酒柜还空着</text>
+      <text class="empty-sub">去今夜特调调一杯喜欢的，收进来攒成专属酒单</text>
+      <button class="go-btn" bindtap="goMix">去调一杯</button>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="shelf-head">
+      <text class="shelf-count">共 {{shelf.length}} 杯珍藏</text>
+    </view>
+    <view class="shelf-grid">
+      <view wx:for="{{shelf}}" wx:key="cn" class="shelf-card">
+        <text class="shelf-rm" data-cn="{{item.cn}}" bindtap="onRemove">×</text>
+        <text class="shelf-cn">{{item.cn}}</text>
+        <text class="shelf-en">{{item.en}}</text>
+        <text class="shelf-base">{{item.base}}</text>
+        <view class="shelf-foot">
+          <text class="shelf-cnt" wx:if="{{item.count > 0}}">点过 {{item.count}} 次</text>
+          <text class="shelf-date">{{item.date}}</text>
+        </view>
+      </view>
+    </view>
+    <button class="go-btn go-btn-ghost" bindtap="goMix">去今夜特调再挑一杯</button>
+  </block>
+
+</view>

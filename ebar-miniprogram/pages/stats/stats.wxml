@@ -1,0 +1,41 @@
+<!-- pages/stats/stats.wxml -->
+<view class="wrap">
+
+  <view wx:if="{{loading}}" class="loading">数据加载中…</view>
+
+  <block wx:else>
+    <view class="section-title">心情数据<view class="line"></view></view>
+    <view class="stats-cards">
+      <view class="stat-card"><text class="v">{{total}}</text><text class="k">微醺记录</text></view>
+      <view class="stat-card"><text class="v">{{avg}}</text><text class="k">平均心情 /10</text></view>
+      <view class="stat-card"><text class="v">{{max}}</text><text class="k">最高心情</text></view>
+      <view class="stat-card"><text class="v">{{released}}</text><text class="k">已释怀心事</text></view>
+      <view class="stat-card"><text class="v">{{owe}}</text><text class="k">还压着的事</text></view>
+      <view class="stat-card"><text class="v">{{streak}}</text><text class="k">连续光顾/晚</text></view>
+    </view>
+
+    <view class="section-title">心情趋势<view class="line"></view></view>
+    <view class="card">
+      <view wx:if="{{trendPoints.length < 2}}" class="trend-empty">喝完两杯再来画曲线——心情分数记够 2 条，就能看到你的情绪走向。</view>
+      <view wx:else class="trend-wrap">
+        <view class="trend-head">
+          <text class="trend-title">最近的心情曲线</text>
+          <text class="trend-sub">近 {{trendPoints.length}} 次微醺记录 · 越高越愉悦</text>
+        </view>
+        <canvas type="2d" id="trendCanvas" class="trend-canvas"></canvas>
+      </view>
+    </view>
+
+    <view class="section-title">微醺时间轴<view class="line"></view></view>
+    <view class="card">
+      <view wx:if="{{diaries.length === 0}}" class="trend-empty">还没有微醺记录</view>
+      <view wx:else class="timeline">
+        <view wx:for="{{diaries}}" wx:key="id" class="tl-item">
+          <text class="tl-date">{{item.date}}</text>
+          <text class="tl-text">{{item.content}}{{item.drink ? ' · 喝了 ' + item.drink : ''}} · 心情 {{item.score}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+</view>

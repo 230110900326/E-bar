@@ -1,0 +1,1065 @@
+<!-- 本工作台通过 WorkBuddy 资料库能力（library skill）搭建、存储和部署 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>夜半微醺 · 电子酒吧</title>
+<style>
+  :root{
+    --bg-0:#0b0a14; --bg-1:#14101f; --bg-2:#1b1530;
+    --amber:#e8a33d; --amber-soft:#f4b860; --amber-glow:rgba(232,163,61,.28);
+    --wine:#8b2c3f; --violet:#6b4e8e; --teal:#3d8b7a;
+    --ink:#ece8f5; --ink-2:#b8b0cc; --ink-3:#7d7591;
+    --line:rgba(255,255,255,.08); --card:rgba(255,255,255,.045); --card-2:rgba(255,255,255,.07);
+    --red:#e8584a; --green:#5fb87a;
+    --radius:16px; --serif:"Georgia","Noto Serif SC","Songti SC",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg-0);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:15px}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(232,163,61,.10), transparent 60%),
+      radial-gradient(700px 600px at 10% 110%, rgba(107,78,142,.16), transparent 60%),
+      linear-gradient(180deg,#0b0a14 0%,#0e0b18 50%,#0b0a14 100%);
+    background-attachment:fixed;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  ::selection{background:var(--amber);color:#1a1228}
+  .wrap{max-width:920px;margin:0 auto;padding:0 16px 100px}
+
+  /* 顶部招牌 */
+  header.bar{position:sticky;top:0;z-index:30;backdrop-filter:blur(14px);
+    background:linear-gradient(180deg,rgba(11,10,20,.92),rgba(11,10,20,.55));
+    border-bottom:1px solid var(--line);padding:14px 16px}
+  .bar-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .logo{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+  .logo-mark{width:38px;height:38px;border-radius:11px;flex-shrink:0;
+    background:radial-gradient(circle at 35% 30%,var(--amber-soft),var(--amber) 60%,var(--wine) 140%);
+    box-shadow:0 0 18px var(--amber-glow),inset 0 0 8px rgba(255,255,255,.18);
+    display:grid;place-items:center}
+  .logo-mark svg{width:22px;height:22px}
+  .logo-txt h1{font-family:var(--serif);font-size:19px;letter-spacing:1px;color:var(--ink);font-weight:600}
+  .logo-txt span{font-size:11px;color:var(--ink-3);letter-spacing:3px;text-transform:uppercase}
+  .sync{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);
+    padding:6px 10px;border:1px solid var(--line);border-radius:20px;background:var(--card);white-space:nowrap}
+  .sync .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+  .sync.off .dot{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+  .sync.off{color:var(--amber-soft)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink-2);display:grid;place-items:center;cursor:pointer;flex-shrink:0;transition:.2s}
+  .icon-btn:hover{background:var(--card-2);color:var(--amber-soft);border-color:var(--amber-glow)}
+  .icon-btn svg{width:18px;height:18px}
+
+  /* 置顶：今夜开门营业 */
+  .open-sign{margin-top:18px;border-radius:var(--radius);overflow:hidden;
+    background:linear-gradient(135deg,rgba(139,44,63,.22),rgba(107,78,142,.18));
+    border:1px solid rgba(232,163,61,.18)}
+  .open-head{display:flex;align-items:center;gap:12px;padding:16px 18px}
+  .neon{font-family:var(--serif);font-size:20px;color:var(--amber-soft);
+    text-shadow:0 0 12px var(--amber-glow),0 0 24px rgba(232,163,61,.15);letter-spacing:1px}
+  .open-head .sub{font-size:12px;color:var(--ink-2);margin-left:auto;display:flex;align-items:center;gap:6px}
+  .streak{background:rgba(232,163,61,.14);border:1px solid var(--amber-glow);color:var(--amber-soft);
+    padding:3px 9px;border-radius:14px;font-size:12px;font-weight:600}
+  .open-body{padding:0 18px 16px}
+  .open-body p.tip{font-size:13px;color:var(--ink-2);margin-bottom:10px}
+  .owe-list{display:flex;flex-direction:column;gap:8px}
+  .owe{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;
+    background:rgba(232,88,74,.10);border:1px solid rgba(232,88,74,.25)}
+  .owe .tag{font-size:11px;color:var(--red);font-weight:600;flex-shrink:0}
+  .owe .txt{flex:1;font-size:13px;color:var(--ink);min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .owe button{flex-shrink:0;font-size:12px;color:var(--ink);background:rgba(232,163,61,.18);
+    border:1px solid var(--amber-glow);padding:5px 11px;border-radius:8px;cursor:pointer;transition:.2s}
+  .owe button:hover{background:var(--amber);color:#1a1228}
+  .owe-empty{font-size:13px;color:var(--ink-3);padding:14px;text-align:center;font-style:italic}
+
+  /* Tab */
+  .tabs{position:sticky;top:67px;z-index:20;display:flex;gap:6px;margin:18px 0 4px;
+    padding:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px)}
+  .tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--ink-3);
+    font-size:13px;font-family:var(--sans);cursor:pointer;border-radius:9px;transition:.2s;
+    display:flex;flex-direction:column;align-items:center;gap:4px}
+  .tab svg{width:18px;height:18px}
+  .tab.active{background:linear-gradient(135deg,var(--amber),var(--wine));color:#1a1228;font-weight:600;
+    box-shadow:0 4px 14px rgba(232,163,61,.25)}
+  .tab.active svg{color:#1a1228}
+
+  .panel{display:none;animation:fade .35s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .section-title{font-family:var(--serif);font-size:16px;color:var(--amber-soft);margin:18px 2px 12px;
+    display:flex;align-items:center;gap:8px}
+  .section-title .line{flex:1;height:1px;background:linear-gradient(90deg,var(--amber-glow),transparent)}
+  .ai-tip{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;border-radius:12px;background:rgba(232,163,61,.08);border:1px solid rgba(232,163,61,.25);margin-bottom:14px}
+  .ai-tip svg{width:20px;height:20px;flex-shrink:0;margin-top:3px;color:var(--amber-soft)}
+  .ai-tip b{font-size:13px;color:var(--amber-soft)}
+  .ai-tip p{font-size:12px;color:var(--ink-2);margin-top:2px;line-height:1.65}
+
+  /* 心情选择 */
+  .mood-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+  .mood{padding:16px 8px;border-radius:13px;background:var(--card);border:1px solid var(--line);
+    cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+  .mood:hover{background:var(--card-2);border-color:var(--amber-glow);transform:translateY(-2px)}
+  .mood svg{width:30px;height:30px}
+  .mood span{font-size:13px;color:var(--ink-2)}
+  .mood.picked{background:rgba(232,163,61,.14);border-color:var(--amber);box-shadow:0 0 16px var(--amber-glow)}
+  .mood.picked span{color:var(--amber-soft)}
+
+  /* 特调卡片 */
+  .drink{border-radius:var(--radius);overflow:hidden;border:1px solid var(--amber-glow);
+    background:linear-gradient(160deg,rgba(232,163,61,.10),rgba(139,44,63,.10));
+    animation:fade .4s ease}
+  .drink-top{display:flex;gap:16px;padding:18px;align-items:center}
+  .glass{width:64px;height:80px;flex-shrink:0;position:relative}
+  .drink-info{flex:1;min-width:0}
+  .drink-info .cn{font-family:var(--serif);font-size:21px;color:var(--ink);font-weight:600}
+  .drink-info .en{font-size:11px;color:var(--ink-3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+  .drink-info .base{font-size:12px;color:var(--amber-soft);margin-top:6px}
+  .drink-body{padding:0 18px 18px}
+  .drink-body .taste{font-size:13px;color:var(--ink-2);margin-bottom:10px}
+  .cure{padding:13px 15px;border-radius:11px;background:rgba(255,255,255,.04);
+    border-left:3px solid var(--amber);font-size:14px;color:var(--ink);font-style:italic;line-height:1.7}
+  .steps{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+  .step{font-size:11px;color:var(--ink-2);padding:5px 10px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.points{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--amber-soft);padding:6px 11px;border:1px solid var(--amber-glow);border-radius:20px;background:rgba(232,163,61,.10);white-space:nowrap}
+.points svg{width:14px;height:14px}
+.order{border-radius:var(--radius);border:1px dashed var(--amber-glow);background:rgba(232,163,61,.06);padding:22px 20px;text-align:center}
+.order .o-mood{font-size:13px;color:var(--ink-2);margin-bottom:6px}
+.order .o-drink{font-family:var(--serif);font-size:19px;color:var(--ink);margin-bottom:12px}
+.order .o-cost{font-size:12px;color:var(--amber-soft);margin-bottom:16px}
+.order .o-hint{font-size:11px;color:var(--ink-3);margin-top:12px}
+.mixing{text-align:center;padding:44px 20px}
+.shaker{width:72px;height:72px;margin:0 auto 20px;animation:shake .7s ease-in-out infinite;transform-origin:center bottom}
+@keyframes shake{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+.mixing-txt{font-family:var(--serif);font-size:17px;color:var(--amber-soft);margin-bottom:5px;text-shadow:0 0 10px var(--amber-glow)}
+.mixing-sub{font-size:12px;color:var(--ink-3);letter-spacing:1px}
+.how{margin-top:10px;padding:11px 13px;border-radius:10px;background:rgba(61,139,122,.10);border:1px solid rgba(61,139,122,.22);font-size:13px;color:var(--ink-2);line-height:1.7}
+.how-label{display:inline-block;font-size:11px;color:#7fd0bc;font-weight:600;margin-right:8px;padding:2px 8px;background:rgba(61,139,122,.20);border-radius:6px;vertical-align:1px}
+.steps-label{font-size:11px;color:var(--ink-3);margin-top:13px;margin-bottom:7px}
+  /* 今日推荐 */
+  .today-card{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(232,163,61,.14),rgba(123,60,180,.10));border:1px solid var(--amber-glow);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+  .today-emoji{font-size:38px;flex-shrink:0}
+  .today-info{flex:1;min-width:0}
+  .today-top{display:flex;align-items:center;gap:8px}
+  .today-badge{font-size:11px;color:#1a1020;background:var(--amber);font-weight:700;padding:2px 9px;border-radius:20px}
+  .today-cn{font-family:var(--serif);font-size:18px;color:var(--amber-soft);margin-top:7px}
+  .today-en{font-size:11px;color:var(--ink-3);margin-top:1px}
+  .today-why{font-size:12px;color:var(--ink-2);margin-top:7px;line-height:1.6}
+  .today-btn{flex-shrink:0;background:var(--amber);color:#1a1020;font-weight:700;font-size:13px;padding:10px 18px;border-radius:22px;border:none;cursor:pointer;min-height:0}
+  .today-btn:hover{background:#f2bd6a}
+  /* 抽一杯 */
+  .mood.lucky{background:linear-gradient(135deg,rgba(232,163,61,.18),rgba(123,60,180,.14));border:1px dashed var(--amber-glow)}
+  .mood.lucky .lucky-emoji{font-size:30px;display:block;animation:diceSpin 2.4s ease-in-out infinite}
+  @keyframes diceSpin{0%,100%{transform:rotate(0) scale(1)}50%{transform:rotate(12deg) scale(1.08)}}
+  .mood.lucky:hover{border-style:solid;border-color:var(--amber)}
+  /* 心情趋势图 */
+  .trend-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+  .trend-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .trend-title{font-family:var(--serif);font-size:15px;color:var(--amber-soft)}
+  .trend-sub{font-size:11px;color:var(--ink-3)}
+  .trend-svg{width:100%;height:130px;display:block}
+  .trend-empty{text-align:center;padding:18px 10px;font-size:12px;color:var(--ink-3)}
+  .trend-dot{fill:var(--amber);stroke:var(--bg);stroke-width:1.5}
+  .trend-line{stroke:var(--amber-glow);stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .trend-area{fill:url(#trendGrad);opacity:.18}
+  /* 酒柜 */
+  .shelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .shelf-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 14px;position:relative}
+  .shelf-card .cn{font-family:var(--serif);font-size:14px;color:var(--amber-soft)}
+  .shelf-card .en{font-size:10px;color:var(--ink-3);margin-top:2px}
+  .shelf-card .base{font-size:11px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+  .shelf-card .shelf-cnt{display:inline-block;font-size:10px;color:#1a1020;background:rgba(232,163,61,.85);font-weight:700;padding:2px 8px;border-radius:20px;margin-top:9px}
+  .shelf-card .rm{position:absolute;top:8px;right:9px;width:20px;height:20px;border:0;background:transparent;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;border-radius:50%}
+  .shelf-card .rm:hover{color:#e05c5c;background:rgba(224,92,92,.12)}
+  .shelf-empty{text-align:center;padding:20px 10px;font-size:12px;color:var(--ink-3)}
+  .shelf-tip{margin-top:14px;text-align:center;font-size:12px;color:var(--ink-3)}
+  .shelf-tip a{color:var(--amber);text-decoration:none;font-weight:600}
+  /* 勋章 */
+  .badge-chip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:11px;color:var(--amber-soft);background:rgba(232,163,61,.14);border:1px solid var(--amber-glow);border-radius:20px;padding:2px 9px;vertical-align:2px}
+  .badge-chip .b-emoji{font-size:12px}
+  /* 海报 */
+  .act-row{display:flex;gap:10px;margin-top:14px}
+  .act-row .btn{flex:1}
+  /* 心情数据统计卡 */
+  .stats-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center}
+  .stat-card .v{font-family:var(--serif);font-size:20px;color:var(--amber-soft);font-weight:700}
+  .stat-card .k{font-size:10px;color:var(--ink-3);margin-top:5px}
+  /* 我的 */
+  .me-list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .me-item{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:.15s}
+  .me-item:last-child{border-bottom:0}
+  .me-item:hover{background:rgba(232,163,61,.06)}
+  .me-item svg{width:18px;height:18px;color:var(--amber);flex-shrink:0}
+  .me-txt{flex:1;font-size:14px;color:var(--ink)}
+  .me-arrow{color:var(--ink-3);font-size:18px}
+  .me-detail{margin-top:14px}
+  .me-panel{background:var(--card);border:1px solid var(--amber-glow);border-radius:var(--radius);padding:18px}
+  .me-panel h3{font-family:var(--serif);font-size:16px;color:var(--amber-soft);margin-bottom:12px}
+  .me-panel p,.me-panel li{font-size:13px;color:var(--ink-2);line-height:1.8}
+  .me-panel ul{padding-left:18px;margin:8px 0}
+  .me-panel .close{margin-top:14px;width:100%}
+  .me-panel .mood-tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(232,163,61,.14);color:var(--amber-soft);margin:2px 3px 2px 0}
+  /* 积分明细 */
+  .ledger-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .ledger-row:last-child{border-bottom:0}
+  .ledger-l{color:var(--ink-2)}
+  .ledger-d{font-size:11px;color:var(--ink-3);margin-top:2px}
+  .ledger-v{font-weight:700}
+  .ledger-v.plus{color:#5fb87a}
+  .ledger-v.minus{color:#e05c5c}
+
+  /* 表单 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+  textarea,input[type=text],input[type=number]{width:100%;background:rgba(0,0,0,.25);
+    border:1px solid var(--line);border-radius:11px;padding:12px 14px;color:var(--ink);
+    font-size:16px;font-family:var(--sans);resize:vertical;transition:.2s}
+  textarea{min-height:90px;line-height:1.7}
+  textarea:focus,input:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-glow)}
+  textarea::placeholder,input::placeholder{color:var(--ink-3)}
+  label.fl{font-size:12px;color:var(--ink-2);display:block;margin-bottom:7px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 20px;border-radius:11px;border:none;cursor:pointer;font-size:14px;font-family:var(--sans);
+    font-weight:600;transition:.2s;min-height:44px}
+  .btn-pri{background:linear-gradient(135deg,var(--amber),var(--wine));color:#1a1228;
+    box-shadow:0 4px 16px rgba(232,163,61,.25)}
+  .btn-pri:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .btn-ghost{background:var(--card-2);color:var(--ink-2);border:1px solid var(--line)}
+  .btn-ghost:hover{color:var(--amber-soft);border-color:var(--amber-glow)}
+  .btn svg{width:16px;height:16px}
+  .form-foot{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .form-foot .btn{flex:1;min-width:130px}
+
+  /* 滑块 */
+  .slider-wrap{display:flex;align-items:center;gap:14px}
+  input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;
+    background:linear-gradient(90deg,var(--wine),var(--amber),var(--green));outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+    background:var(--amber-soft);border:3px solid #1a1228;box-shadow:0 0 10px var(--amber-glow);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--amber-soft);
+    border:3px solid #1a1228;cursor:pointer}
+  .score-val{font-family:var(--serif);font-size:26px;color:var(--amber-soft);min-width:48px;text-align:center;
+    font-weight:600}
+
+  /* 时间轴 / 留言墙 */
+  .feed{display:flex;flex-direction:column;gap:12px}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px;
+    position:relative;transition:.2s}
+  .item:hover{border-color:var(--card-2)}
+  .item.unresolved{border-color:rgba(232,88,74,.3);background:rgba(232,88,74,.06)}
+  .item-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .chip{font-size:11px;padding:3px 9px;border-radius:8px;font-weight:600}
+  .chip-msg{background:rgba(139,44,63,.22);color:#e89aa6}
+  .chip-diary{background:rgba(61,139,122,.20);color:#7fd0bc}
+  .chip-mood{background:var(--card-2);color:var(--ink-2)}
+  .chip-owe{background:rgba(232,88,74,.2);color:var(--red)}
+  .chip-ok{background:rgba(95,184,122,.18);color:var(--green)}
+  .item-date{font-size:11px;color:var(--ink-3);margin-left:auto}
+  .item-txt{font-size:14px;color:var(--ink);line-height:1.7}
+  .item-cure{margin-top:9px;padding:10px 12px;border-radius:9px;background:rgba(232,163,61,.07);
+    border-left:2px solid var(--amber);font-size:13px;color:var(--ink-2);font-style:italic}
+  .item-foot{display:flex;align-items:center;gap:10px;margin-top:11px}
+  .score-pill{font-size:12px;color:var(--amber-soft);font-weight:600}
+  .mini-btn{font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);
+    background:var(--card-2);color:var(--ink-2);transition:.2s;margin-left:auto}
+  .mini-btn:hover{color:var(--amber-soft);border-color:var(--amber-glow)}
+  .mini-btn.danger:hover{color:var(--red);border-color:rgba(232,88,74,.4)}
+  .empty{text-align:center;padding:36px 16px;color:var(--ink-3)}
+  .empty svg{width:42px;height:42px;margin-bottom:10px;opacity:.5}
+
+  /* 提示条 */
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:rgba(20,16,31,.96);border:1px solid var(--amber-glow);color:var(--ink);
+    padding:11px 18px;border-radius:11px;font-size:13px;z-index:60;opacity:0;transition:.3s;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* 底部Tab（移动端） */
+  .bottom-tabs{display:none}
+
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(5,4,10,.7);backdrop-filter:blur(4px);z-index:80;
+    display:none;align-items:center;justify-content:center;padding:20px}
+  .mask.show{display:flex}
+  .modal{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+    max-width:380px;width:100%;padding:22px}
+  .modal h3{font-family:var(--serif);font-size:17px;color:var(--amber-soft);margin-bottom:10px}
+  .modal p{font-size:13px;color:var(--ink-2);margin-bottom:16px;line-height:1.7}
+  .modal .act{display:flex;gap:10px}
+  .modal .act .btn{flex:1}
+
+  @media(max-width:600px){
+    .mood-grid{grid-template-columns:repeat(2,1fr)}
+    .drink-top{flex-direction:column;text-align:center;gap:12px}
+    .logo-txt span{display:none}
+    .tabs{display:none}
+    .bottom-tabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:40;
+      background:linear-gradient(0deg,rgba(11,10,20,.98),rgba(11,10,20,.85));
+      border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+      backdrop-filter:blur(12px)}
+    .bottom-tabs .tab{flex:1}
+    .wrap{padding-bottom:90px}
+    .open-head{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-inner">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 3h14l-2 9a5 5 0 0 1-10 0L5 3z" stroke="#1a1228" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 17v4M9 21h6" stroke="#1a1228" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="9" r="1.4" fill="#1a1228"/></svg>
+      </div>
+      <div class="logo-txt">
+        <h1>夜半微醺</h1>
+        <span>E-Bar · 解忧酒馆</span>
+      </div>
+    </div>
+    <div class="points" id="points"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v10M9.5 9.5c0-1 1.1-1.8 2.5-1.8s2.5.8 2.5 1.8-1.1 1.8-2.5 1.8-2.5.8-2.5 1.8 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span class="num">100</span></div>
+    <div class="sync" id="syncBox"><span class="dot"></span><span id="syncTxt">已同步</span></div>
+    <button class="icon-btn" id="exportBtn" title="导出备份">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- 今夜开门营业 -->
+  <section class="open-sign">
+    <div class="open-head">
+      <span class="neon">今夜开门营业</span>
+      <span class="sub">连续光顾 <span class="streak" id="streak">1</span> 晚 · 积分 <span class="streak" id="streakPoints">100</span><span class="badge-chip" id="badgeChip" style="display:none"><span class="b-emoji" id="badgeEmoji">🍺</span><span id="badgeName"></span></span></span>
+    </div>
+    <div class="open-body">
+      <p class="tip">这几桩心事还压在心里，今晚要不要试着放下？</p>
+      <div class="owe-list" id="oweList"></div>
+    </div>
+  </section>
+
+  <!-- Tab -->
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="mix"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h14l-2 9a5 5 0 0 1-10 0L5 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 17v4M9 21h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>今夜特调</button>
+    <button class="tab" data-tab="talk"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>解忧酒馆</button>
+    <button class="tab" data-tab="shelf"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6h14l1.5 11a2 2 0 0 1-2 2.2h-13A2 2 0 0 1 3.5 17L5 6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.5 10V6a3.5 3.5 0 0 1 7 0v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>我的酒柜</button>
+    <button class="tab" data-tab="stats"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>心情</button>
+    <button class="tab" data-tab="me"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>我的</button>
+  </nav>
+
+  <!-- 模块1 今夜特调 -->
+  <section class="panel active" id="p-mix">
+    <div class="section-title">今日推荐<span class="line"></span></div>
+    <div class="today-card" id="todayCard"></div>
+    <div class="section-title">今晚，你是什么心情？<span class="line"></span></div>
+    <div class="mood-grid" id="moodGrid"></div>
+    <div id="drinkSlot"></div>
+    <div class="section-title">今晚这一杯<span class="line"></span></div>
+    <div class="card">
+      <label class="fl">心情分数（1 低谷 · 10 愉悦）</label>
+      <div class="slider-wrap">
+        <input type="range" id="score" min="1" max="10" value="6">
+        <div class="score-val" id="scoreVal">6</div>
+      </div>
+      <div style="height:14px"></div>
+      <label class="fl">今夜特调（酒名）</label>
+      <input type="text" id="drinkName" placeholder="莫吉托 / 热托迪 / 一杯白开水也好…">
+      <div style="height:12px"></div>
+      <label class="fl">想说的话</label>
+      <textarea id="diaryInput" placeholder="微醺的时候，写点什么吧。"></textarea>
+      <div class="form-foot">
+        <button class="btn btn-pri" id="diarySend">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          记下今晚
+        </button>
+        <button class="btn btn-ghost" id="diaryClear">清空</button>
+      </div>
+    </div>
+    <div class="section-title">微醺时间轴<span class="line"></span></div>
+    <div class="feed" id="diaryFeed"></div>
+  </section>
+
+  <!-- 模块2 解忧酒馆 -->
+  <section class="panel" id="p-talk">
+    <div class="section-title">把烦恼说给酒保听<span class="line"></span></div>
+    <div class="ai-tip">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 15a4 4 0 0 1 7 0M9.5 9.5h.01M14.5 9.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>AI 酒保在线 · 针对性回信</b><p>想让酒保真正读懂你的烦恼？在 WorkBuddy 会话里打开「夜半微醺」，把心事说给我听——我会认真回复，回信会自动同步到你的心事墙。</p></div>
+    </div>
+    <div class="card">
+      <label class="fl">今夜的心事</label>
+      <textarea id="talkInput" placeholder="工作、感情、未来……什么都行，这里只有你和我。"></textarea>
+      <div class="form-foot">
+        <button class="btn btn-pri" id="talkSend">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12l18-8-8 18-2-7-8-3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          投递烦恼
+        </button>
+        <button class="btn btn-ghost" id="talkClear">清空</button>
+      </div>
+    </div>
+    <div class="section-title">心事墙<span class="line"></span></div>
+    <div class="feed" id="talkFeed"></div>
+  </section>
+
+  <!-- 模块3 我的酒柜 -->
+  <section class="panel" id="p-shelf">
+    <div class="section-title">我的酒柜<span class="line"></span></div>
+    <div class="shelf-grid" id="shelfGrid"></div>
+    <div class="shelf-tip">收藏想再喝的酒，攒成你的专属酒单。去 <a href="javascript:void(0)" onclick="goTab('mix')">今夜特调</a> 挑一杯收进来吧。</div>
+  </section>
+
+  <!-- 模块4 心情数据 -->
+  <section class="panel" id="p-stats">
+    <div class="section-title">心情数据<span class="line"></span></div>
+    <div class="stats-cards" id="statsCards"></div>
+    <div class="trend-card"><div id="trendBox"></div></div>
+  </section>
+
+  <!-- 模块5 我的 -->
+  <section class="panel" id="p-me">
+    <div class="section-title">我的<span class="line"></span></div>
+    <div class="me-list">
+      <div class="me-item" onclick="goTab('stats')"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="me-txt">心情数据</span><span class="me-arrow">›</span></div>
+      <div class="me-item" onclick="openMe('tasks')"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l1.8 5.4H19l-4.6 3.4 1.8 5.4-4.2-3.2-4.2 3.2 1.8-5.4L5 8.4h5.2L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="me-txt">积分任务</span><span class="me-arrow">›</span></div>
+      <div class="me-item" onclick="openMe('ledger')"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="me-txt">积分明细</span><span class="me-arrow">›</span></div>
+      <div class="me-item" onclick="openMe('about')"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="me-txt">关于</span><span class="me-arrow">›</span></div>
+      <div class="me-item" onclick="openMe('guide')"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 4-9 4-9-4 9-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 11l9 4 9-4M3 15l9 4 9-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="me-txt">使用须知</span><span class="me-arrow">›</span></div>
+    </div>
+    <div class="me-detail" id="meDetail"></div>
+  </section>
+</div>
+
+<!-- 底部Tab（移动端） -->
+<nav class="bottom-tabs" id="btabs">
+  <button class="tab active" data-tab="mix"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h14l-2 9a5 5 0 0 1-10 0L5 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 17v4M9 21h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>特调</button>
+  <button class="tab" data-tab="talk"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>解忧</button>
+  <button class="tab" data-tab="shelf"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6h14l1.5 11a2 2 0 0 1-2 2.2h-13A2 2 0 0 1 3.5 17L5 6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.5 10V6a3.5 3.5 0 0 1 7 0v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>酒柜</button>
+  <button class="tab" data-tab="stats"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>心情</button>
+  <button class="tab" data-tab="me"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M5 21a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>我的</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- 确认弹窗 -->
+<div class="mask" id="mask">
+  <div class="modal">
+    <h3 id="mTitle">确认操作</h3>
+    <p id="mDesc">确定要这样做吗？</p>
+    <div class="act">
+      <button class="btn btn-ghost" id="mCancel">再想想</button>
+      <button class="btn btn-pri" id="mOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ 配置 ============ */
+var DB_ID = "HmF6tRglJuWYALxsTZkouX";
+var SAMPLE_IDS = ["svvh9eJQcIeVX4ZPR5LdPh","3fpECRuzfBwca1t65nXfc9","kICcX7MX9blGUaOhQvNSP3","w5TbVnQZNVw4CnD7ioPUcT","JcSVojmZ2DGSe4aBns2U7A"];
+var LS_KEY = "wb_ebar_cache_v1";
+var SEED_KEY = "wb_ebar_seeded";
+var SHELF_KEY = "wb_ebar_shelf_v1";
+var CNT_KEY = "wb_ebar_drinkcnt_v1";
+/* 离线兜底示例数据（云端不可用时本地初始化用） */
+var SAMPLE_DATA = [
+  {id:"sample_1",type:"解忧留言",mood:"疲惫",content:"周一加班到深夜，觉得自己像个机器",cure:"辛苦了，机器也会做梦的。今晚就做个好梦吧。",score:3,drink:"",status:"未释怀",date:"2026-08-17"},
+  {id:"sample_2",type:"解忧留言",mood:"焦虑",content:"考研复习进度慢，感觉别人都比我快",cure:"慢慢来，比较快。你走的是自己的路，不必和别人赛跑。",score:3,drink:"",status:"未释怀",date:"2026-08-16"},
+  {id:"sample_3",type:"微醺日记",mood:"失落",content:"想家了，想妈妈做的红烧肉",cure:"",score:5,drink:"热托迪",status:"已释怀",date:"2026-08-15"},
+  {id:"sample_4",type:"解忧留言",mood:"烦闷",content:"和朋友吵架了，不知道怎么开口",cure:"先开口的人不是认输，是更珍惜这段关系。",score:4,drink:"",status:"已释怀",date:"2026-08-14"},
+  {id:"sample_5",type:"微醺日记",mood:"平静",content:"今天在阳台看了一场很美的晚霞",cure:"",score:7,drink:"莫吉托",status:"已释怀",date:"2026-08-13"}
+];
+
+/* ============ 酒谱库 ============ */
+var MOODS = [
+  {key:"烦闷",emoji:"cloud",drink:{cn:"古典波本",en:"Old Fashioned",base:"波本威士忌 · 苦精 · 方糖",taste:"浓烈醇厚，像把一团闷气慢慢搅开，咽下去就散了。",how:"冰镇直饮，大冰块慢化，配一块黑巧克力，睡前一小时。",cure:"闷的时候别硬撑。有些情绪，泡进酒里就化开了，明天醒来，又是新的空气。",steps:["方糖+苦精","加冰块","注波本","橙皮点缀"]}},
+  {key:"失落",emoji:"rain",drink:{cn:"温热红酒",en:"Mulled Wine",base:"红酒 · 肉桂 · 丁香 · 橙片",taste:"温热的肉桂香会从喉咙抱住你，像奶奶灶台上的那口暖。",how:"小火温到 60 度别煮沸，双手捧杯，配肉桂卷，雨夜最对味。",cure:"失落是心里空了一块，不必急着填满。先暖暖手，再暖暖心，慢慢就回过神来了。",steps:["红酒入锅","加香料","小火温热","橙片装饰"]}},
+  {key:"焦虑",emoji:"bolt",drink:{cn:"薄荷莫吉托",en:"Mojito",base:"白朗姆 · 薄荷 · 青柠 · 苏打",taste:"清凉直冲脑门，让一根紧绷的神经先松一口气。",how:"冰块堆满杯，薄荷叶先捣出香，配咸饼干，闷热午后最爽。",cure:"焦虑是因为想把未来一口气过完。可日子是一口一口喝的，不是一口闷的。今晚只管今晚。",steps:["薄荷叶捣香","加糖青柠","碎冰朗姆","苏打注满"]}},
+  {key:"孤独",emoji:"moon",drink:{cn:"长岛冰茶",en:"Long Island Iced Tea",base:"伏特加 · 金酒 · 朗姆 · 龙舌兰 · 可乐",taste:"看着像茶，其实是四杯烈酒陪你坐着，你并不孤单。",how:"慢慢喝别追，配点炸物垫胃，有朋友在场时喝最好。",cure:"孤独不是身边没人，是心里没人应声。但今晚，我陪你坐一会儿。一杯下肚，夜就不那么长了。",steps:"四基酒等量|加柠檬糖浆|注可乐|柠檬片".split("|")}},
+  {key:"疲惫",emoji:"yawn",drink:{cn:"蜂蜜热托迪",en:"Hot Toddy",base:"威士忌 · 蜂蜜 · 柠檬 · 热水",taste:"蜂蜜裹着柠檬的温柔，从胃里一路暖到眼皮。",how:"趁热小口啜，蜂蜜多放一勺，配软饼干，睡前半小时一杯。",cure:"辛苦了。累的时候不必逞强，把这杯喝完，早点睡。明天的事，交给明天的你。",steps:["热水入杯","加蜂蜜柠檬","注威士忌","丁香点缀"]}},
+  {key:"迷茫",emoji:"compass",drink:{cn:"血腥玛丽",en:"Bloody Mary",base:"伏特加 · 番茄汁 · 辣酱 · 芹菜",taste:"番茄的烟火气踩实脚下，辣意帮你找回方向感。",how:"冰镇咸口，芹菜杆当搅棒，配早午餐或宿醉后喝最对。",cure:"迷茫不可怕，可怕的是站在原地不动。先迈一步，哪怕方向错了，走着走着就看清了。",steps:"伏特加番茄汁|辣酱黑椒|柠檬汁|芹菜梗".split("|")}}
+];
+
+var MOOD_SVG = {
+  cloud:'<path d="M6 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+  rain:'<path d="M6 15a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 15H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  bolt:'<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+  moon:'<path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+  yawn:'<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="14.5" rx="3" ry="4" stroke="currentColor" stroke-width="1.6"/><path d="M7 9l1.5 1M17 9l-1.5 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  compass:'<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'
+};
+
+/* 治愈语料 · 按关键词分类，命中优先，未命中走通用 */
+var CURE_RULES = [
+  {kw:["工作","加班","上班","老板","同事","kpi","业绩","项目"],lines:[
+    "工作只是生活的一部分，不是全部。下班了，就把自己还给自己。",
+    "今天已经撑下来了，了不起。明天的 KPI 交给明天的你。",
+    "你不是机器，累了就关机重启，谁也拦不住。"
+  ]},
+  {kw:["累","疲惫","撑不住","熬","心力交瘁","精疲力尽","倦"],lines:[
+    "辛苦了，真的辛苦了。今晚什么都别想，先把自己哄睡。",
+    "累的时候，允许自己什么都不做。躺着也是一种努力。",
+    "你已经熬过了那么多难熬的夜晚，今晚也一样能过去。"
+  ]},
+  {kw:["感情","喜欢","爱","分手","失恋","前任","暗恋","表白","对象"],lines:[
+    "喜欢一个人没有错，错的只是时机。先把自己喜欢回来。",
+    "能分开的，都不是错过的遗憾，是给对的人让路。",
+    "你值得被好好爱着，在那之前，先好好爱自己。"
+  ]},
+  {kw:["吵架","矛盾","误会","冷战","朋友","闺蜜","兄弟","撕"],lines:[
+    "先开口的人不是认输，是更珍惜这段关系。",
+    "真朋友吵不散，散了的多半本来就不牢靠。",
+    "误会像隔夜茶，倒掉就好，别反复热。"
+  ]},
+  {kw:["家","想家","妈妈","爸爸","爸妈","回家","父母","外婆","奶奶"],lines:[
+    "想家就打个电话回去，他们也在想你。",
+    "家是不用假装坚强的地方，想回就回。",
+    "妈妈做的菜，是世界上最好的解药。"
+  ]},
+  {kw:["考试","考研","考公","复习","学习","成绩","论文","答辩","期末"],lines:[
+    "慢慢来，比较快。你走的是自己的路，不必和别人赛跑。",
+    "复习进度慢没关系，每天前进一点就比原地强。",
+    "考不上天不会塌，但你坚持的每一天都算数。"
+  ]},
+  {kw:["孤独","一个人","没人","寂寞","孤单","落单"],lines:[
+    "孤独不是身边没人，是心里没人应声。今晚，我陪你坐一会儿。",
+    "一个人也能把日子过热乎，你比想象中坚强。",
+    "独处是和自己约会的好时候，别辜负了这杯酒。"
+  ]},
+  {kw:["未来","迷茫","方向","不知道","怎么办","选择","纠结","后悔"],lines:[
+    "迷茫不可怕，可怕的是站在原地不动。先迈一步，走着走着就看清了。",
+    "没有白走的路，每一步都算数，哪怕现在看不懂。",
+    "选择没有对错，只有走下去才变成对的路。"
+  ]},
+  {kw:["钱","穷","没钱","赚钱","花销","房租","负债","工资"],lines:[
+    "钱的事急不来，先把自己照顾好，才有力气去挣。",
+    "穷只是暂时的状态，不是你的身价。",
+    "今晚不谈钱，只谈风月和这杯酒。"
+  ]},
+  {kw:["焦虑","急","压力","紧张","怕","担心","害怕","心慌"],lines:[
+    "焦虑是因为想把未来一口气过完。日子是一口一口喝的，不是一口闷的。",
+    "天黑到极致，就是天亮的前奏。",
+    "你担心的多数事，最后都不会发生。"
+  ]}
+];
+var CURE_GENERAL = [
+  "你已经做得很好了，只是暂时还没看见。",
+  "允许自己难过一会儿，情绪也是需要呼吸的。",
+  "你不是一个人扛，说出来，就轻了一半。",
+  "今天的你，已经尽力了。这就够了。",
+  "哭出来也没关系，眼泪是身体的雨，下完就晴了。",
+  "睡一觉，很多事明天就有了答案。",
+  "你值得被温柔以待，包括被自己温柔以待。",
+  "心里有光的人，走到哪都不会太暗。",
+  "低谷不是终点，是拐弯的地方。",
+  "对自己好一点，这辈子你最该讨好的就是自己。"
+];
+function matchCure(text){
+  var t=String(text||"").toLowerCase();
+  var hits=[];
+  for(var i=0;i<CURE_RULES.length;i++){var r=CURE_RULES[i];for(var j=0;j<r.kw.length;j++){if(t.indexOf(r.kw[j].toLowerCase())>=0){hits.push(r);break}}}
+  if(hits.length>0){var r2=pick(hits);return pick(r2.lines)}
+  return pick(CURE_GENERAL);
+}
+
+/* ============ 工具 ============ */
+function $(s){return document.querySelector(s)}
+function el(id){return document.getElementById(id)}
+function toast(msg){var t=el("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show")},2200)}
+function todayStr(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmtDate(s){if(!s)return "";var d=new Date(s);if(isNaN(d))return s;return (d.getMonth()+1)+"月"+d.getDate()+"日"}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function esc(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* 离线缓存 */
+function cacheGet(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]")}catch(e){return[]}}
+function cacheSet(arr){try{localStorage.setItem(LS_KEY,JSON.stringify(arr))}catch(e){}}
+function seeded(){try{return !!localStorage.getItem(SEED_KEY)}catch(e){return true}}
+function markSeeded(){try{localStorage.setItem(SEED_KEY,"1")}catch(e){}}
+
+/* 连续光顾 */
+function streakMark(){var k="wb_ebar_streak";var today=todayStr();var data={};try{data=JSON.parse(localStorage.getItem(k)||"{}")}catch(e){}var last=data.last;var cnt=data.cnt||0;if(last!==today){if(last){var ld=new Date(last);var td=new Date(today);var diff=Math.round((td-ld)/86400000);if(diff===1)cnt=cnt+1;else if(diff>1)cnt=1}else{cnt=1}data={last:today,cnt:cnt};try{localStorage.setItem(k,JSON.stringify(data))}catch(e){}}return cnt||1}
+
+/* 打卡勋章 */
+var BADGES=[
+  {need:3,emoji:"🍺",name:"酒馆新客"},
+  {need:7,emoji:"🥃",name:"酒馆常客"},
+  {need:14,emoji:"🪵",name:"资深酒客"},
+  {need:30,emoji:"🌟",name:"微醺诗人"}
+];
+function getBadge(streak){
+  var cur=null,next=null;
+  for(var i=0;i<BADGES.length;i++){
+    if(streak>=BADGES[i].need){cur=BADGES[i]}
+    else{next=BADGES[i];break}
+  }
+  if(!cur)return{cur:null,next:BADGES[0],remain:BADGES[0].need-streak};
+  if(!next)return{cur:cur,next:null,remain:0};
+  return{cur:cur,next:next,remain:next.need-streak};
+}
+function renderBadge(){
+  var s=parseInt(el("streak").textContent)||1;
+  var b=getBadge(s);
+  var chip=el("badgeChip");
+  if(!b.cur){chip.style.display="none";return}
+  el("badgeEmoji").textContent=b.cur.emoji;
+  el("badgeName").textContent=b.cur.name+(b.next?" · 再 "+(b.remain)+" 晚升 "+b.next.name:"");
+  chip.style.display="inline-flex";
+}
+
+/* 积分系统：记录情绪赚积分，花积分调酒 */
+var POINTS_KEY="wb_ebar_points";
+var LEDGER_KEY="wb_ebar_ledger_v1";
+var MIX_COST=15;
+function pointsGet(){try{var v=localStorage.getItem(POINTS_KEY);if(v===null){localStorage.setItem(POINTS_KEY,"100");ledgerAdd("初始酒资","+100",100);return 100}return parseInt(v)||0}catch(e){return 100}}
+function pointsSet(v){try{localStorage.setItem(POINTS_KEY,String(v))}catch(e){}}
+/* 积分流水：{t,label,delta,balance}[] */
+function ledgerGet(){try{return JSON.parse(localStorage.getItem(LEDGER_KEY)||"[]")}catch(e){return[]}}
+function ledgerAdd(label,delta,balance){try{var l=ledgerGet();l.unshift({t:todayStr(),label:label,delta:delta,balance:balance});if(l.length>200)l=l.slice(0,200);localStorage.setItem(LEDGER_KEY,JSON.stringify(l))}catch(e){}}
+function pointsAdd(n,label){
+  var c=pointsGet()+n;if(c<0)c=0;
+  pointsSet(c);renderPoints();
+  ledgerAdd(label||(n>0?"积分奖励":"消费"),(n>0?"+"+n:String(n)),c);
+  return c;
+}
+function renderPoints(){var p=el("points");if(p){var num=p.querySelector(".num");if(num)num.textContent=pointsGet()}var sp=el("streakPoints");if(sp)sp.textContent=pointsGet()}
+function dailyBonus(){var k="wb_ebar_daily";var today=todayStr();try{var last=localStorage.getItem(k);if(last!==today){pointsAdd(10,"每日光顾");try{localStorage.setItem(k,today)}catch(e){}toast("每日光顾 +10 积分")}}catch(e){}}
+
+/* 酒柜收藏 */
+function shelfGet(){try{return JSON.parse(localStorage.getItem(SHELF_KEY)||"[]")}catch(e){return[]}}
+function shelfSet(arr){try{localStorage.setItem(SHELF_KEY,JSON.stringify(arr))}catch(e){}}
+function inShelf(cn){var s=shelfGet();for(var i=0;i<s.length;i++){if(s[i].cn===cn)return true}return false}
+/* 点单次数统计：{酒名: 次数} */
+function cntGet(){try{return JSON.parse(localStorage.getItem(CNT_KEY)||"{}")}catch(e){return{}}}
+function cntSet(m){try{localStorage.setItem(CNT_KEY,JSON.stringify(m))}catch(e){}}
+function cntAdd(cn){var m=cntGet();m[cn]=(m[cn]||0)+1;cntSet(m)}
+function cntOf(cn){var m=cntGet();return m[cn]||0}
+function shelfAdd(d){
+  var s=shelfGet();
+  for(var i=0;i<s.length;i++){if(s[i].cn===d.cn){toast("这杯已经在酒柜里啦");return}}
+  s.unshift({cn:d.cn,en:d.en,base:d.base,taste:d.taste,how:d.how,cure:d.cure,mood:d.mood,date:todayStr()});
+  shelfSet(s);renderShelf();toast("已收进酒柜");
+}
+function shelfRemove(cn){
+  var s=shelfGet().filter(function(x){return x.cn!==cn});
+  shelfSet(s);renderShelf();toast("已从酒柜移除");
+}
+function renderShelf(){
+  var s=shelfGet();
+  var box=el("shelfGrid");
+  if(!box)return;
+  if(s.length===0){box.innerHTML='<div class="shelf-empty">酒柜还空着，调一杯喜欢的收进来吧。</div>';return}
+  box.innerHTML=s.map(function(x){
+    var c=cntOf(x.cn);
+    var cnt=c>0?'<div class="shelf-cnt">点过 '+c+' 次</div>':'';
+    return '<div class="shelf-card"><button class="rm" onclick="shelfRemove(\''+esc(x.cn).replace(/'/g,"\\'")+'\')" title="移除">×</button><div class="cn">'+esc(x.cn)+'</div><div class="en">'+esc(x.en)+'</div><div class="base">'+esc(x.base)+'</div>'+cnt+'</div>';
+  }).join("");
+}
+window.shelfRemove=shelfRemove;
+
+/* ============ SDK ============ */
+var db = (window.__SMART_PAGE__ && window.__SMART_PAGE__.database) ? window.__SMART_PAGE__.database : null;
+var online = !!db;
+var DB_TIMEOUT = 5000; /* 云端单次调用超时；超时永久切离线，避免卡死 */
+
+function setSync(state){var b=el("syncBox"),t=el("syncTxt");if(state==="on"){b.classList.remove("off");t.textContent="已同步"}else if(state==="sync"){b.classList.add("off");t.textContent="同步中"}else{b.classList.remove("off");b.classList.add("off");t.textContent="离线模式"}}
+
+/* 超时包装：超时则 reject，让调用方走 catch 降级 */
+function withTimeout(p,ms){return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error("timeout"))},ms)})])}
+/* 云端不可用：永久切本地，后续不再尝试云端，保证 UI 始终可点 */
+function goOffline(){db=null;online=false;setSync("off")}
+
+/* 加载所有记录：先尝试云端，失败/超时用本地缓存 */
+var ALL=[];
+async function loadAll(){
+  setSync("sync");
+  if(db){
+    try{
+      var all=[];var cursor=null;
+      do{
+        var r=await withTimeout(db.query({databaseId:DB_ID,sorts:[{property:"日期",direction:"descending"}],pageSize:100,startCursor:cursor}),DB_TIMEOUT);
+        var rs=r.results||[];for(var i=0;i<rs.length;i++){all.push(normalize(rs[i]))}
+        cursor=r.nextCursor;var more=r.hasMore;
+      }while(more && cursor);
+      ALL=all;cacheSet(all);setSync("on");return;
+    }catch(e){console.warn("cloud load fail",e);goOffline()}
+  }
+  ALL=cacheGet();setSync("off");
+  if(ALL.length===0 && !seeded()){ALL=SAMPLE_DATA.slice();cacheSet(ALL);markSeeded()}
+}
+function normalize(row){
+  return {
+    id:row._id||row.id||"",
+    type:row["类型"]||"",
+    mood:row["心情"]||"",
+    content:row["心事内容"]||"",
+    cure:row["治愈回信"]||"",
+    score:row["心情分数"]||0,
+    drink:row["今夜特调"]||"",
+    status:row["状态"]||"",
+    date:row["日期"]||""
+  };
+}
+async function addRec(props){
+  if(db){try{var r=await withTimeout(db.addRecord({databaseId:DB_ID,properties:props}),DB_TIMEOUT);var nid=r.id||r._id||(r.result&&r.result.id)||"";var rec=normalize2(props);rec.id=nid||("local_"+Date.now());ALL.unshift(rec);cacheSet(ALL);return rec}catch(e){console.warn(e);goOffline()}}
+  var rec=normalize2(props);rec.id="local_"+Date.now();ALL.unshift(rec);cacheSet(ALL);return rec;
+}
+function normalize2(props){
+  return {
+    id:"",type:(props["类型"]&&props["类型"].select)||"",mood:(props["心情"]&&props["心情"].select)||"",
+    content:(props["心事内容"]&&props["心事内容"].text)||"",cure:(props["治愈回信"]&&props["治愈回信"].text)||"",
+    score:(props["心情分数"]&&props["心情分数"].number)||0,drink:(props["今夜特调"]&&props["今夜特调"].text)||"",
+    status:(props["状态"]&&props["状态"].select)||"",date:(props["日期"]&&props["日期"].date)||""
+  };
+}
+async function updRec(id,props){
+  if(db){try{await withTimeout(db.updateRecord({databaseId:DB_ID,recordId:id,properties:props}),DB_TIMEOUT)}catch(e){console.warn(e);goOffline()}}
+  for(var j=0;j<ALL.length;j++){if(ALL[j].id===id){var n=normalize2(props);for(var kk in n){ALL[j][kk]=n[kk]}}}
+  cacheSet(ALL);
+}
+async function delRec(id){
+  if(db){try{await withTimeout(db.deleteRecord({databaseId:DB_ID,recordId:id}),DB_TIMEOUT)}catch(e){console.warn(e);goOffline()}}
+  ALL=ALL.filter(function(r){return r.id!==id});cacheSet(ALL);
+}
+
+/* ============ 渲染 ============ */
+function renderOwe(){
+  var owes=ALL.filter(function(r){return r.type==="解忧留言"&&r.status==="未释怀"});
+  var box=el("oweList");
+  if(owes.length===0){box.innerHTML='<div class="owe-empty">心里没有压着的事了，今晚好好喝一杯。</div>';return}
+  var html=owes.map(function(r){
+    return '<div class="owe"><span class="tag">未释怀</span><span class="txt">'+esc(r.content)+'</span><button onclick="resolveOwe(\''+r.id+'\')">释怀</button></div>';
+  }).join("");
+  box.innerHTML=html;
+}
+
+function renderTalk(){
+  var list=ALL.filter(function(r){return r.type==="解忧留言"});
+  var box=el("talkFeed");
+  if(list.length===0){box.innerHTML=emptySVG("还没有心事被投递","把烦恼说给酒保听吧");return}
+  box.innerHTML=list.map(talkItem).join("");
+}
+function talkItem(r){
+  var owe=r.status==="未释怀";
+  var chip='<span class="chip chip-msg">解忧</span>';
+  if(r.mood)chip+='<span class="chip chip-mood">'+esc(r.mood)+'</span>';
+  chip+='<span class="chip '+(owe?"chip-owe":"chip-ok")+'">'+(owe?"未释怀":"已释怀")+'</span>';
+  var cure=r.cure?'<div class="item-cure">酒保回信：'+esc(r.cure)+'</div>':'';
+  var btn=owe?'<button class="mini-btn" onclick="resolveOwe(\''+r.id+'\')">标记释怀</button>':'<button class="mini-btn danger" onclick="delItem(\''+r.id+'\')">删除</button>';
+  return '<div class="item'+(owe?" unresolved":"")+'"><div class="item-head">'+chip+'<span class="item-date">'+fmtDate(r.date)+'</span></div><div class="item-txt">'+esc(r.content)+'</div>'+cure+'<div class="item-foot">'+btn+'</div></div>';
+}
+
+function renderDiary(){
+  var list=ALL.filter(function(r){return r.type==="微醺日记"});
+  var box=el("diaryFeed");
+  if(list.length===0){box.innerHTML=emptySVG("还没有微醺的记录","今晚记下第一杯吧");return}
+  box.innerHTML=list.map(diaryItem).join("");
+}
+function diaryItem(r){
+  var chip='<span class="chip chip-diary">日记</span>';
+  if(r.mood)chip+='<span class="chip chip-mood">'+esc(r.mood)+'</span>';
+  var drink=r.drink?'<span class="score-pill">· '+esc(r.drink)+'</span>':'';
+  var score=r.score?'<span class="score-pill">心情 '+r.score+'/10</span>':'';
+  return '<div class="item"><div class="item-head">'+chip+'<span class="item-date">'+fmtDate(r.date)+'</span></div>'+(r.content?'<div class="item-txt">'+esc(r.content)+'</div>':'')+'<div class="item-foot">'+score+drink+'<button class="mini-btn danger" onclick="delItem(\''+r.id+'\')">删除</button></div></div>';
+}
+
+function emptySVG(t,s){
+  return '<div class="empty"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h14l-2 9a5 5 0 0 1-10 0L5 3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 17v4M9 21h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><div>'+t+'</div><div style="font-size:12px;margin-top:4px">'+s+'</div></div>';
+}
+
+/* 心情数据统计卡 */
+function renderStats(){
+  var box=el("statsCards");if(!box)return;
+  var diaries=ALL.filter(function(r){return r.type==="微醺日记"&&r.score});
+  var talks=ALL.filter(function(r){return r.type==="解忧留言"});
+  var released=talks.filter(function(r){return r.status==="已释怀"}).length;
+  var total=diaries.length;
+  var avg=0,max=0;
+  if(total>0){
+    var sum=0;for(var i=0;i<diaries.length;i++){sum+=diaries[i].score;if(diaries[i].score>max)max=diaries[i].score}
+    avg=Math.round(sum/total*10)/10;
+  }
+  var owe=talks.length-released;
+  var s=el("streak").textContent||"1";
+  box.innerHTML=
+    '<div class="stat-card"><div class="v">'+total+'</div><div class="k">微醺记录</div></div>'+
+    '<div class="stat-card"><div class="v">'+avg+'</div><div class="k">平均心情 /10</div></div>'+
+    '<div class="stat-card"><div class="v">'+max+'</div><div class="k">最高心情</div></div>'+
+    '<div class="stat-card"><div class="v">'+released+'</div><div class="k">已释怀心事</div></div>'+
+    '<div class="stat-card"><div class="v">'+owe+'</div><div class="k">还压着的事</div></div>'+
+    '<div class="stat-card"><div class="v">'+s+'</div><div class="k">连续光顾/晚</div></div>';
+}
+
+/* 我的面板：积分任务/明细/关于/使用须知 */
+var ME_CONTENT={
+  tasks:'<div class="me-panel"><h3>🍺 积分任务</h3><ul><li><span class="mood-tag">每日光顾 +10</span>每天第一次打开酒吧自动到账</li><li><span class="mood-tag">投递烦恼 +5</span>把心事说给酒保听</li><li><span class="mood-tag">写微醺日记 +5</span>记下今晚这一杯</li><li><span class="mood-tag">标记释怀 +3</span>放下压着的心事</li></ul><p style="margin-top:10px">花在哪：<span class="mood-tag">调一杯 -15</span><span class="mood-tag">抽一杯 -15</span></p><button class="btn btn-pri close" onclick="closeMe()">知道了</button></div>',
+  ledger:'<div class="me-panel" id="ledgerPanel"><h3>💰 积分明细</h3><div id="ledgerList">加载中…</div><button class="btn btn-pri close" onclick="closeMe()">知道了</button></div>',
+  about:'<div class="me-panel"><h3>🍸 关于「夜半微醺」</h3><p>这是一间没有酒的酒吧，装着你卸下的疲惫。在这里，你可以：</p><ul><li>按心情调一杯酒，让酒保接住你的情绪</li><li>把烦恼说给酒保听，收到针对性的回信</li><li>记录微醺日记，画出自己的心情曲线</li><li>收藏爱喝的酒，攒成专属酒单</li></ul><p>数据只属于你自己，可以随时导出备份。</p><button class="btn btn-pri close" onclick="closeMe()">知道了</button></div>',
+  guide:'<div class="me-panel"><h3>📜 使用须知</h3><ul><li><b>积分闭环</b>：记录情绪赚积分，花积分调酒解忧</li><li><b>AI 酒保</b>：在 WorkBuddy 会话里倾诉，回信会同步到心事墙</li><li><b>离线可用</b>：断网也能用，恢复后自动同步</li><li><b>数据备份</b>：右上角导出按钮可备份 JSON，攒够 30 条建议备份</li><li><b>心情曲线</b>：需记够 2 条微醺日记才会绘制</li></ul><button class="btn btn-pri close" onclick="closeMe()">知道了</button></div>'
+};
+window.openMe=function(key){
+  var box=el("meDetail");
+  box.innerHTML=ME_CONTENT[key]||"";
+  if(key==="ledger"){
+    var l=ledgerGet();
+    var list=el("ledgerList");
+    if(l.length===0){list.innerHTML='<div style="text-align:center;color:var(--ink-3);padding:20px 0">还没有积分记录</div>'}
+    else{list.innerHTML=l.map(function(r){
+      var cls=r.delta.charAt(0)==="-"?"minus":"plus";
+      return '<div class="ledger-row"><div><div class="ledger-l">'+esc(r.label)+'</div><div class="ledger-d">'+esc(r.t)+' · 余额 '+r.balance+'</div></div><span class="ledger-v '+cls+'">'+esc(r.delta)+'</span></div>';
+    }).join("")}
+  }
+};
+window.closeMe=function(){el("meDetail").innerHTML=""};
+function renderTrend(){
+  var box=el("trendBox");
+  if(!box)return;
+  var list=ALL.filter(function(r){return r.type==="微醺日记"&&r.score});
+  list.sort(function(a,b){return a.date<b.date?-1:1});
+  list=list.slice(-14);
+  if(list.length<2){box.innerHTML='<div class="trend-empty">喝完两杯再来画曲线——心情分数记够 2 条，就能看到你的情绪走向。</div>';return}
+  var W=600,H=130,padL=34,padR=14,padT=16,padB=22;
+  var min=1,max=10;
+  var xs=[];var pts=[];
+  for(var i=0;i<list.length;i++){
+    var x=padL+(W-padL-padR)*i/(list.length-1);
+    var sc=Math.max(1,Math.min(10,list[i].score));
+    var y=padT+(H-padT-padB)*(1-(sc-min)/(max-min));
+    xs.push(x);pts.push({x:x,y:y,r:list[i],sc:sc});
+  }
+  var line=pts.map(function(p,i){return (i===0?"M":"L")+p.x.toFixed(1)+" "+p.y.toFixed(1)}).join(" ");
+  var area=line+" L"+xs[xs.length-1].toFixed(1)+" "+(H-padB).toFixed(1)+" L"+xs[0].toFixed(1)+" "+(H-padB).toFixed(1)+" Z";
+  var dots=pts.map(function(p){
+    return '<circle class="trend-dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.4"><title>'+fmtDate(p.r.date)+' · 心情 '+p.sc+'/10</title></circle>';
+  }).join("");
+  var labels=pts.map(function(p){
+    return '<text x="'+p.x.toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#6b6155">'+String(p.r.date).slice(5).replace("-","/")+'</text>';
+  }).join("");
+  var marks=[1,5,10].map(function(v){
+    var y=padT+(H-padT-padB)*(1-(v-min)/(max-min));
+    return '<text x="6" y="'+(y+3)+'" font-size="9" fill="#6b6155">'+v+'</text>';
+  }).join("");
+  box.innerHTML='<div class="trend-head"><div><span class="trend-title">最近的心情曲线</span><div class="trend-sub">近 '+list.length+' 次微醺记录 · 分数越高越愉悦</div></div></div><svg class="trend-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8a33d"/><stop offset="1" stop-color="#e8a33d" stop-opacity="0"/></linearGradient></defs><path class="trend-area" d="'+area+'"></path><path class="trend-line" d="'+line+'"></path>'+dots+marks+labels+'</svg>';
+}
+
+/* 分享海报：canvas 绘制今晚的酒 */
+function makePoster(m){
+  var d=m.drink;
+  var c=document.createElement("canvas");
+  c.width=750;c.height=1200;
+  var g=c.getContext("2d");
+  var bg=g.createLinearGradient(0,0,0,1200);
+  bg.addColorStop(0,"#1c1510");bg.addColorStop(0.55,"#241b12");bg.addColorStop(1,"#15100c");
+  g.fillStyle=bg;g.fillRect(0,0,750,1200);
+  /* 氛围光斑 */
+  g.save();g.globalAlpha=0.16;
+  var rg=g.createRadialGradient(560,180,20,560,180,360);
+  rg.addColorStop(0,"#e8a33d");rg.addColorStop(1,"rgba(232,163,61,0)");
+  g.fillStyle=rg;g.beginPath();g.arc(560,180,360,0,Math.PI*2);g.fill();
+  var rg2=g.createRadialGradient(120,980,20,120,980,320);
+  rg2.addColorStop(0,"#8a4f2c");rg2.addColorStop(1,"rgba(138,79,44,0)");
+  g.fillStyle=rg2;g.beginPath();g.arc(120,980,320,0,Math.PI*2);g.fill();
+  g.restore();
+  /* 边框 */
+  g.strokeStyle="rgba(232,163,61,.55)";g.lineWidth=2;g.strokeRect(30,30,690,1140);
+  g.strokeStyle="rgba(232,163,61,.25)";g.lineWidth=1;g.strokeRect(42,42,666,1116);
+  /* 顶部 */
+  g.fillStyle="#e8a33d";g.font="600 30px 'Songti SC','Noto Serif SC',serif";
+  g.textAlign="center";
+  g.fillText("夜 半 微 醺",375,130);
+  g.fillStyle="#8f806c";g.font="22px sans-serif";
+  g.fillText("— 今夜特调 —",375,176);
+  /* 酒杯 emoji 放中间 */
+  g.font="150px serif";g.fillText("🍸",375,420);
+  /* 酒名 */
+  g.fillStyle="#f2d9ae";g.font="700 64px 'Songti SC','Noto Serif SC',serif";
+  g.fillText(d.cn,375,560);
+  g.fillStyle="#9b8b74";g.font="28px sans-serif";
+  g.fillText(d.en||"",375,616);
+  /* 基酒 */
+  g.fillStyle="#b8a48c";g.font="30px sans-serif";
+  g.fillText(d.base||"",375,700);
+  /* 治愈语 */
+  g.fillStyle="#d9c6a8";g.font="34px 'Songti SC','Noto Serif SC',serif";
+  var words=wrapCure(d.cure||"");
+  var wy=820;
+  for(var i=0;i<words.length;i++){g.fillText(words[i],375,wy);wy+=54}
+  /* 日期 */
+  g.fillStyle="#6b5f4f";g.font="26px sans-serif";
+  g.fillText(todayStr()+" · 夜半微醺电子酒吧",375,wy+40);
+  var url=c.toDataURL("image/png");
+  var a=document.createElement("a");
+  a.href=url;a.download="夜半微醺_"+d.cn+"_"+todayStr()+".png";a.click();
+  toast("海报已生成，看看下载文件夹");
+}
+function wrapCure(s){
+  var arr=[];var cur="";
+  for(var i=0;i<s.length;i++){
+    cur+=s[i];
+    if(cur.length>=9&&(s[i]==="，"||s[i]==="。"||s[i]==="、")){arr.push(cur);cur=""}
+    else if(cur.length>=11){arr.push(cur);cur=""}
+  }
+  if(cur)arr.push(cur);
+  return arr;
+}
+
+function renderAll(){renderOwe();renderTalk();renderDiary();renderTrend();renderShelf();renderStats()}
+
+/* ============ 今夜特调 ============ */
+function buildMoods(){
+  var g=el("moodGrid");var html="";
+  MOODS.forEach(function(m,idx){
+    html+='<div class="mood" data-idx="'+idx+'"><svg viewBox="0 0 24 24" fill="none">'+(MOOD_SVG[m.emoji]||"")+'</svg><span>'+m.key+'</span></div>';
+  });
+  html+='<div class="mood lucky" id="luckyMood"><span class="lucky-emoji">🎲</span><span>抽一杯</span></div>';
+  g.innerHTML=html;
+  g.querySelectorAll(".mood[data-idx]").forEach(function(n){n.addEventListener("click",function(){g.querySelectorAll(".mood").forEach(function(x){x.classList.remove("picked")});n.classList.add("picked");showDrinkRequest(MOODS[+n.dataset.idx])})});
+  var lk=el("luckyMood");if(lk){lk.addEventListener("click",luckyDraw)}
+}
+/* 今日推荐：按「距起始日的天数」轮换，6 款酒一天一杯、6 天一轮，绝不重复 */
+var TODAY_EPOCH = new Date("2026-01-01T00:00:00+08:00").getTime();
+function todayPick(){
+  var day=Math.floor((Date.now()-TODAY_EPOCH)/86400000);
+  return MOODS[((day%MOODS.length)+MOODS.length)%MOODS.length];
+}
+function renderToday(){
+  var box=el("todayCard");if(!box)return;
+  var m=todayPick();var d=m.drink;
+  box.innerHTML='<div class="today-emoji">'+'🍸'+'</div><div class="today-info"><div class="today-top"><span class="today-badge">今日推荐</span><span class="today-en">'+fmtDate(todayStr())+' · 酒保今日特选</span></div><div class="today-cn">'+esc(d.cn)+'</div><div class="today-why">'+esc(d.taste)+'</div></div><button class="today-btn" id="todayBtn">就喝这杯</button>';
+  var b=el("todayBtn");if(b){b.addEventListener("click",function(){doMix(m)})}
+}
+/* 抽一杯：随机出酒，扣积分 */
+function luckyDraw(){
+  if(pointsGet()<MIX_COST){toast("积分不足，去投递烦恼或写日记赚积分吧");return}
+  var mk=MOODS[Math.floor(Math.random()*MOODS.length)];
+  pointsAdd(-MIX_COST,"抽一杯·"+mk.drink.cn);
+  el("drinkSlot").innerHTML='<div class="mixing"><div class="shaker" style="font-size:64px;line-height:1">🎲</div><div class="mixing-txt">命运正在洗牌…</div><div class="mixing-sub">猜猜今晚是哪一杯</div></div>';
+  var mk=MOODS[Math.floor(Math.random()*MOODS.length)];
+  cntAdd(mk.drink.cn);
+  setTimeout(function(){showDrink(mk);renderShelf();toast("命运抽中了一杯"+mk.drink.cn+"，请慢用")},1600);
+}
+function showDrinkRequest(m){
+  el("drinkSlot").innerHTML='<div class="order"><div class="o-mood">今晚心情：'+esc(m.key)+'</div><div class="o-drink">酒保推荐：'+esc(m.drink.cn)+'</div><div class="o-cost">调一杯消耗 '+MIX_COST+' 积分</div><button class="btn btn-pri" id="mixBtn">让酒保调一杯</button><div class="o-hint">当前积分：'+pointsGet()+' · 可去解忧酒馆投递烦恼赚积分</div></div>';
+  var b=el("mixBtn");if(b){b.addEventListener("click",function(){doMix(m)})}
+}
+function doMix(m){
+  if(pointsGet()<MIX_COST){toast("积分不足，去投递烦恼或写日记赚积分吧");return}
+  pointsAdd(-MIX_COST,"调一杯·"+m.drink.cn);
+  cntAdd(m.drink.cn);
+  el("drinkSlot").innerHTML='<div class="mixing"><div class="shaker">'+shakerSVG()+'</div><div class="mixing-txt">酒保正在调酒…</div><div class="mixing-sub">'+esc(m.drink.cn)+'</div></div>';
+  var mk=m;setTimeout(function(){showDrink(mk);renderShelf();toast("酒保调好了一杯"+mk.drink.cn+"，请慢用")},1800);
+}
+function showDrink(m){
+  var d=m.drink;
+  var saved=inShelf(d.cn);
+  var shelfBtn=saved?'<button class="btn btn-ghost" disabled>已在酒柜</button>':'<button class="btn btn-ghost" id="shelfBtn"><svg viewBox="0 0 24 24" fill="none" style="width:15px;height:15px"><path d="M5 6h14l1.5 11a2 2 0 0 1-2 2.2h-13A2 2 0 0 1 3.5 17L5 6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 10V6a3.5 3.5 0 0 1 7 0v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>收进酒柜</button>';
+  el("drinkSlot").innerHTML='<div class="drink"><div class="drink-top"><div class="glass">'+glassSVG(m.key)+'</div><div class="drink-info"><div class="cn">'+d.cn+'</div><div class="en">'+d.en+'</div><div class="base">'+esc(d.base)+'</div></div></div><div class="drink-body"><div class="taste">'+esc(d.taste)+'</div><div class="how"><span class="how-label">怎么喝</span>'+esc(d.how)+'</div><div class="cure">'+esc(d.cure)+'</div><div class="act-row">'+shelfBtn+'<button class="btn btn-pri" id="posterBtn"><svg viewBox="0 0 24 24" fill="none" style="width:15px;height:15px"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>生成海报</button></div></div></div>';
+  var sb=el("shelfBtn");if(sb){sb.addEventListener("click",function(){shelfAdd(d);sb.disabled=true;sb.textContent="已在酒柜"})}
+  var pb=el("posterBtn");if(pb){pb.addEventListener("click",function(){makePoster(m)})}
+}
+function shakerSVG(){
+  return '<svg viewBox="0 0 24 24" fill="none"><path d="M8 3h8l-1 3H9L8 3z" fill="rgba(232,163,61,.2)" stroke="#e8a33d" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 6l-1 5a4 4 0 0 0 8 0l-1-5" stroke="#e8a33d" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 11h5" stroke="#e8a33d" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="13" r="1.3" fill="#e8a33d" fill-opacity=".5"/></svg>';
+}
+function glassSVG(mood){
+  var colors={烦闷:"#b8732f",失落:"#a83244",焦虑:"#5fb87a",孤独:"#d4af37",疲惫:"#e8a33d",迷茫:"#c0392b"};
+  var c=colors[mood]||"#e8a33d";
+  return '<svg viewBox="0 0 64 80" fill="none"><path d="M14 10h36l-4 40a14 14 0 0 1-28 0L14 10z" fill="rgba(255,255,255,.06)" stroke="'+c+'" stroke-width="1.6"/><path d="M16 14h32l-3.5 35a11 11 0 0 1-25 0L16 14z" fill="'+c+'" fill-opacity="0.55"/><path d="M22 14l3 30M30 14l1 32" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="26" r="2.5" fill="rgba(255,255,255,.5)"/><circle cx="38" cy="34" r="1.8" fill="rgba(255,255,255,.4)"/></svg>';
+}
+
+/* ============ 操作 ============ */
+window.resolveOwe=async function(id){
+  await updRec(id,{"状态":{"select":"已释怀"}});renderAll();pointsAdd(3,"标记释怀");toast("放下心事 +3 积分，轻松了些");
+};
+window.delItem=async function(id){
+  openModal("删除这条记录？","删掉就找不回来了，确定吗？",async function(){await delRec(id);renderAll();toast("已删除")});
+};
+
+async function sendTalk(){
+  var v=el("talkInput").value.trim();
+  if(!v){toast("先写点什么吧");return}
+  var cure=matchCure(v);
+  el("talkSend").disabled=true;
+  await addRec({"类型":{"select":"解忧留言"},"心事内容":{"text":v},"治愈回信":{"text":cure},"状态":{"select":"未释怀"},"日期":{"date":todayStr()}});
+  el("talkInput").value="";el("talkSend").disabled=false;
+  renderAll();pointsAdd(5,"投递烦恼");toast("投递烦恼 +5 积分，酒保回信已送达");
+}
+async function sendDiary(){
+  var v=el("diaryInput").value.trim();
+  var drink=el("drinkName").value.trim();
+  var score=+el("score").value;
+  if(!v&&!drink){toast("写点什么，或填个酒名吧");return}
+  el("diarySend").disabled=true;
+  await addRec({"类型":{"select":"微醺日记"},"心事内容":{"text":v},"心情分数":{"number":score},"今夜特调":{"text":drink},"状态":{"select":"已释怀"},"日期":{"date":todayStr()}});
+  el("diaryInput").value="";el("drinkName").value="";el("score").value=6;el("scoreVal").textContent="6";
+  el("diarySend").disabled=false;
+  renderAll();pointsAdd(5,"写微醺日记");toast("记下今晚 +5 积分");
+}
+
+/* 导出备份 */
+function exportJSON(){
+  var data=JSON.stringify(ALL,null,2);
+  var blob=new Blob([data],{type:"application/json"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download="夜半微醺_备份_"+todayStr()+".json";a.click();
+  URL.revokeObjectURL(url);toast("已导出备份到本地");
+}
+
+/* 清空示例 */
+function clearSample(){
+  openModal("清空示例数据？","这会删除预置的 5 条示例记录，你自己的记录不受影响。",async function(){
+    for(var i=0;i<SAMPLE_IDS.length;i++){await delRec(SAMPLE_IDS[i])}
+    renderAll();toast("示例已清空");
+  });
+}
+
+/* 弹窗 */
+var modalCb=null;
+function openModal(title,desc,cb){el("mTitle").textContent=title;el("mDesc").textContent=desc;modalCb=cb;el("mask").classList.add("show")}
+function closeModal(){el("mask").classList.remove("show");modalCb=null}
+
+/* Tab */
+function bindTabs(){
+  var all=document.querySelectorAll("[data-tab]");
+  all.forEach(function(n){n.addEventListener("click",function(){
+    var t=n.dataset.tab;
+    document.querySelectorAll("[data-tab]").forEach(function(x){x.classList.toggle("active",x.dataset.tab===t)});
+    document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active")});
+    el("p-"+t).classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+  })});
+}
+window.goTab=function(t){
+  var node=document.querySelector('[data-tab="'+t+'"]');
+  if(node)node.click();
+};
+
+/* ============ 初始化 ============ */
+async function init(){
+  el("streak").textContent=streakMark();
+  renderPoints();
+  renderBadge();
+  dailyBonus();
+  renderToday();
+  buildMoods();
+  bindTabs();
+  el("score").addEventListener("input",function(){el("scoreVal").textContent=this.value});
+  el("talkSend").addEventListener("click",sendTalk);
+  el("diarySend").addEventListener("click",sendDiary);
+  el("talkClear").addEventListener("click",function(){el("talkInput").value=""});
+  el("diaryClear").addEventListener("click",function(){el("diaryInput").value="";el("drinkName").value=""});
+  el("exportBtn").addEventListener("click",exportJSON);
+  el("mCancel").addEventListener("click",closeModal);
+  el("mask").addEventListener("click",function(e){if(e.target===el("mask"))closeModal()});
+  el("mOk").addEventListener("click",function(){if(typeof modalCb==="function")modalCb();closeModal()});
+  await loadAll();
+  renderAll();
+  /* 数据量大时温和提示 */
+  if(ALL.length>=30){toast("数据已积累 "+ALL.length+" 条，建议导出备份")}
+}
+init();
+</script>
+</body>
+</html>

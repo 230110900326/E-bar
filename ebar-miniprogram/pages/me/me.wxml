@@ -1,0 +1,88 @@
+<!-- pages/me/me.wxml -->
+<view class="wrap">
+
+  <!-- 顶部信息卡 -->
+  <view class="hero card">
+    <view class="hero-sub">
+      <text class="hero-pill">连续光顾 <text class="hl">{{streak}}</text> 晚</text>
+      <text class="pts">积分 {{points}}</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="section-title">我的<view class="line"></view></view>
+  <view class="me-list">
+    <view class="me-item" bindtap="goStats">
+      <text class="me-ico">📊</text>
+      <text class="me-txt">心情数据</text>
+      <text class="me-arrow">›</text>
+    </view>
+    <view class="me-item" data-key="tasks" bindtap="open">
+      <text class="me-ico">🎯</text>
+      <text class="me-txt">积分任务</text>
+      <text class="me-arrow">›</text>
+    </view>
+    <view class="me-item" data-key="ledger" bindtap="open">
+      <text class="me-ico">💰</text>
+      <text class="me-txt">积分明细</text>
+      <text class="me-arrow">›</text>
+    </view>
+    <view class="me-item" data-key="about" bindtap="open">
+      <text class="me-ico">🍸</text>
+      <text class="me-txt">关于</text>
+      <text class="me-arrow">›</text>
+    </view>
+    <view class="me-item" data-key="guide" bindtap="open">
+      <text class="me-ico">📜</text>
+      <text class="me-txt">使用须知</text>
+      <text class="me-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 详情区 -->
+  <view wx:if="{{section === 'tasks'}}" class="me-panel">
+    <view class="me-title">🎯 积分任务</view>
+    <view class="task-row"><text class="task-tag">每日光顾 +10</text><text class="task-desc">每天第一次打开酒吧自动到账</text></view>
+    <view class="task-row"><text class="task-tag">投递烦恼 +5</text><text class="task-desc">把心事说给酒保听</text></view>
+    <view class="task-row"><text class="task-tag">写微醺日记 +5</text><text class="task-desc">记下今晚这一杯</text></view>
+    <view class="task-row"><text class="task-tag">标记释怀 +3</text><text class="task-desc">放下压着的心事</text></view>
+    <view class="task-divider"></view>
+    <view class="task-row"><text class="task-tag task-use">调一杯 -15</text><text class="task-desc">让酒保为你调酒</text></view>
+    <view class="task-row"><text class="task-tag task-use">抽一杯 -15</text><text class="task-desc">命运骰子随机出酒</text></view>
+  </view>
+
+  <view wx:elif="{{section === 'ledger'}}" class="me-panel">
+    <view class="me-title">💰 积分明细</view>
+    <view wx:if="{{ledger.length === 0}}" class="ledger-empty">还没有积分记录</view>
+    <view wx:else>
+      <view wx:for="{{ledger}}" wx:key="index" class="ledger-row">
+        <view class="ledger-l">
+          <text class="ledger-label">{{item.label}}</text>
+          <text class="ledger-date">{{item.t}} · 余额 {{item.balance}}</text>
+        </view>
+        <text class="ledger-v {{item.delta >= 0 ? 'plus' : 'minus'}}">{{item.delta > 0 ? '+' + item.delta : item.delta}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{section === 'about'}}" class="me-panel">
+    <view class="me-title">🍸 关于「夜半微醺」</view>
+    <view class="me-text">这是一间没有酒的酒吧，装着你卸下的疲惫。在这里，你可以：</view>
+    <view class="me-text">· 按心情调一杯酒，让酒保接住你的情绪</view>
+    <view class="me-text">· 把烦恼说给酒保听，收到针对性的回信</view>
+    <view class="me-text">· 记录微醺日记，画出自己的心情曲线</view>
+    <view class="me-text">· 收藏爱喝的酒，攒成专属酒单</view>
+    <view class="me-text me-dim">数据只属于你自己，存在微信云开发，安全私密。</view>
+  </view>
+
+  <view wx:elif="{{section === 'guide'}}" class="me-panel">
+    <view class="me-title">📜 使用须知</view>
+    <view class="me-text">· <b>积分闭环</b>：记录情绪赚积分，花积分调酒解忧</view>
+    <view class="me-text">· <b>AI 酒保</b>：针对性回信由云函数调用大模型生成</view>
+    <view class="me-text">· <b>心情曲线</b>：记够 2 条微醺日记才会绘制</view>
+    <view class="me-text">· <b>酒柜次数</b>：每杯酒的点单次数自动统计</view>
+    <view class="me-text">· <b>今日推荐</b>：按天轮换，6 天一轮不重复</view>
+  </view>
+
+  <view class="footer">夜半微醺 · 一间没有酒的酒吧，装着你卸下的疲惫</view>
+</view>

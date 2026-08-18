@@ -1,0 +1,138 @@
+<!-- pages/index/index.wxml -->
+<view class="wrap">
+
+  <!-- 置顶：今夜开门营业 -->
+  <view class="hero card">
+    <view class="hero-top">
+      <text class="hero-title">🌙 今夜开门营业</text>
+    </view>
+    <view class="hero-sub">
+      <text class="hero-pill">连续光顾 <text class="hl">{{streak}}</text> 晚<text wx:if="{{badge}}" class="badge-chip">{{badge.emoji}} {{badge.name}}{{badgeNext}}</text></text>
+      <text class="pts">积分 {{points}}</text>
+    </view>
+    <view wx:if="{{undone > 0}}" class="hero-warn">还有 {{undone}} 桩心事没释怀，点一下让它过去 →</view>
+  </view>
+
+  <!-- 今夜特调 -->
+  <view class="section-title">今日推荐<view class="line"></view></view>
+  <view wx:if="{{today}}" class="today-card">
+    <text class="today-emoji">🍸</text>
+    <view class="today-info">
+      <view class="today-top"><text class="today-badge">今日推荐</text><text class="today-date">{{today.drink.en}}</text></view>
+      <text class="today-cn">{{today.drink.cn}}</text>
+      <text class="today-why">{{today.drink.taste}}</text>
+    </view>
+    <button class="today-btn" bindtap="onTodayDrink">就喝这杯</button>
+  </view>
+
+  <view class="section-title">今夜特调<view class="line"></view></view>
+  <view class="card">
+    <text class="tip">选今晚的心情，让酒保为你调一杯（消耗 15 积分）</text>
+    <view class="mood-grid">
+      <view wx:for="{{moods}}" wx:key="key" class="mood {{pickedKey === item.key ? 'picked' : ''}}" data-key="{{item.key}}" bindtap="onPickMood">
+        <text class="mood-emoji">{{item.emoji}}</text>
+        <text class="mood-name">{{item.key}}</text>
+      </view>
+      <view class="mood lucky" bindtap="onLucky">
+        <text class="mood-emoji lucky-emoji">🎲</text>
+        <text class="mood-name">抽一杯</text>
+      </view>
+    </view>
+
+    <!-- 点单卡 -->
+    <view wx:if="{{pickedMood && !drinkDetail && !mixing}}" class="order">
+      <text class="o-name">酒保推荐 · {{pickedMood.drink.cn}}</text>
+      <text class="o-en">{{pickedMood.drink.en}}</text>
+      <button class="btn-primary" bindtap="doMix">让酒保调一杯（−15）</button>
+      <text class="o-hint" bindtap="cancelPick">换一个心情</text>
+    </view>
+
+    <!-- 摇酒中 -->
+    <view wx:if="{{mixing}}" class="mixing">
+      <view class="shaker"><text class="shake-emoji">🍸</text></view>
+      <text class="mixing-txt">酒保正在调酒…</text>
+    </view>
+
+    <!-- 抽一杯动画 -->
+    <view wx:if="{{lucky}}" class="mixing">
+      <view class="shaker"><text class="shake-emoji lucky-emoji">🎲</text></view>
+      <text class="mixing-txt">命运正在洗牌…</text>
+      <text class="mixing-sub">猜猜今晚是哪一杯</text>
+    </view>
+
+    <!-- 酒卡 -->
+    <view wx:if="{{drinkDetail}}" class="drink">
+      <view class="drink-cn">{{drinkDetail.cn}}</view>
+      <view class="drink-en">{{drinkDetail.en}}</view>
+      <view class="drink-base">{{drinkDetail.base}}</view>
+      <view class="drink-taste">{{drinkDetail.taste}}</view>
+      <view class="how"><text class="how-label">怎么喝</text>{{drinkDetail.how}}</view>
+      <view class="cure">{{drinkDetail.cure}}</view>
+      <view class="act-row">
+        <button class="btn-shelf {{shelfKeys.indexOf(drinkDetail.cn) >= 0 ? 'saved' : ''}}" bindtap="onShelfAdd">{{shelfKeys.indexOf(drinkDetail.cn) >= 0 ? '已在酒柜' : '收进酒柜'}}</button>
+        <button class="btn-poster" bindtap="onPoster">生成海报</button>
+      </view>
+      <text class="o-hint" bindtap="backToMoods">↩ 再选一杯</text>
+    </view>
+
+    <!-- 记下今晚（并入特调） -->
+    <view class="card-divider"><view class="cd-line"></view><text class="cd-txt">记下今晚这一杯</text><view class="cd-line"></view></view>
+    <view class="diary-row">
+      <text class="diary-label">心情分数 {{diaryScore}} / 10</text>
+      <slider min="1" max="10" value="{{diaryScore}}" activeColor="#e8a359" backgroundColor="#3a2d4f" block-size="22" bindchanging="onScore" bindchange="onScore"></slider>
+    </view>
+    <input class="input" placeholder="今晚喝的酒（如：莫吉托）" value="{{diaryDrink}}" bindinput="onDiaryDrink"></input>
+    <textarea class="textarea" placeholder="想说的话…" value="{{diaryText}}" bindinput="onDiaryText" maxlength="200"></textarea>
+    <button class="btn-primary" bindtap="saveDiary">记下这一杯（+5）</button>
+    <view class="timeline">
+      <view wx:for="{{diaries}}" wx:key="id" class="tl-item">
+        <text class="tl-date">{{item.date}}</text>
+        <text class="tl-text">{{item.content}}{{item.drink ? ' · 喝了 ' + item.drink : ''}} · 心情 {{item.score}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 入口组：酒柜 / 心情数据 / 我的 -->
+  <view class="section-title">我的空间<view class="line"></view></view>
+  <view class="entry-grid">
+    <view class="entry-card" bindtap="goShelf">
+      <text class="entry-emoji">🍾</text>
+      <text class="entry-title">我的酒柜</text>
+      <text class="entry-sub">{{shelf.length > 0 ? shelf.length + ' 杯珍藏' : '收藏喜欢的酒'}}</text>
+    </view>
+    <view class="entry-card" bindtap="goStats">
+      <text class="entry-emoji">📊</text>
+      <text class="entry-title">心情数据</text>
+      <text class="entry-sub">曲线与统计</text>
+    </view>
+    <view class="entry-card" bindtap="goMe">
+      <text class="entry-emoji">👤</text>
+      <text class="entry-title">我的</text>
+      <text class="entry-sub">任务·明细·须知</text>
+    </view>
+  </view>
+
+  <!-- 解忧酒馆 -->
+  <view class="section-title">解忧酒馆<view class="line"></view></view>
+  <view class="card">
+    <text class="tip">把心事说给酒保听（AI 酒保针对性回你，不消耗积分）</text>
+    <textarea class="textarea" placeholder="今晚心里压着什么？" value="{{talkText}}" bindinput="onTalkInput" maxlength="200"></textarea>
+    <button class="btn-primary" bindtap="sendTalk">递给酒保</button>
+    <view class="wall">
+      <view wx:for="{{talks}}" wx:key="id" class="wall-item {{item.status === '已释怀' ? 'done' : ''}}">
+        <view class="w-row">
+          <text class="w-mood">{{item.mood}}</text>
+          <text class="w-date">{{item.date}}</text>
+        </view>
+        <text class="w-content">{{item.content}}</text>
+        <text wx:if="{{item.cure}}" class="w-cure">🥃 {{item.cure}}</text>
+        <text wx:if="{{item.status !== '已释怀'}}" class="w-release" data-id="{{item.id}}" bindtap="release">标记为已释怀（+3）</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">夜半微醺 · 一间没有酒的酒吧，装着你卸下的疲惫</view>
+</view>
+
+<!-- 隐藏海报画布 -->
+<canvas type="2d" id="posterCanvas" class="poster-canvas"></canvas>
