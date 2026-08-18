@@ -310,6 +310,12 @@
   .modal p{font-size:13px;color:var(--ink-2);margin-bottom:16px;line-height:1.7}
   .modal .act{display:flex;gap:10px}
   .modal .act .btn{flex:1}
+  /* 海报浮层 */
+  .poster-modal{background:var(--bg-1);border:1px solid var(--amber-glow);border-radius:var(--radius);
+    max-width:380px;width:100%;padding:18px;text-align:center}
+  .poster-img{width:100%;border-radius:10px;display:block;max-height:68vh;object-fit:contain}
+  .poster-tip{font-size:12px;color:var(--amber-soft);margin:12px 0;line-height:1.6}
+  .poster-modal .close{width:100%;margin-top:2px}
 
   @media(max-width:600px){
     .mood-grid{grid-template-columns:repeat(2,1fr)}
@@ -471,6 +477,15 @@
       <button class="btn btn-ghost" id="mCancel">再想想</button>
       <button class="btn btn-pri" id="mOk">确定</button>
     </div>
+  </div>
+</div>
+
+<!-- 海报浮层（移动端长按保存） -->
+<div class="mask" id="posterMask" onclick="closePoster()">
+  <div class="poster-modal" onclick="event.stopPropagation()">
+    <img id="posterImg" class="poster-img" alt="夜半微醺海报">
+    <div class="poster-tip">长按图片即可保存到相册</div>
+    <button class="btn btn-pri close" onclick="closePoster()">关闭</button>
   </div>
 </div>
 
@@ -995,10 +1010,21 @@ function makePoster(m){
   g.fillStyle="#6b5f4f";g.font="26px sans-serif";
   g.fillText(todayStr()+" · 夜半微醺电子酒吧",375,wy+40);
   var url=c.toDataURL("image/png");
-  var a=document.createElement("a");
-  a.href=url;a.download="夜半微醺_"+d.cn+"_"+todayStr()+".png";a.click();
-  toast("海报已生成，看看下载文件夹");
+  /* 移动端（iOS/微信等长按保存最稳）：弹浮层，桌面端直接下载 */
+  if(/Mobi|Android|iPhone|iPad|WeChat/i.test(navigator.userAgent)){
+    openPoster(url);
+  }else{
+    var a=document.createElement("a");
+    a.href=url;a.download="夜半微醺_"+d.cn+"_"+todayStr()+".png";a.click();
+    toast("海报已生成，看看下载文件夹");
+  }
 }
+/* 海报浮层 */
+window.openPoster=function(url){
+  el("posterImg").src=url;
+  el("posterMask").classList.add("show");
+};
+window.closePoster=function(){el("posterMask").classList.remove("show")};
 function wrapCure(s){
   var arr=[];var cur="";
   for(var i=0;i<s.length;i++){
