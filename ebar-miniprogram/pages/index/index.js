@@ -344,7 +344,11 @@ Page({
     this.addDrinkCount(this.data.pickedMood.drink.cn);
     this.setData({ mixing: true });
     setTimeout(() => {
-      this.setData({ mixing: false, drinkDetail: this.data.pickedMood.drink });
+      this.setData({
+        mixing: false,
+        drinkDetail: this.data.pickedMood.drink,
+        diaryDrink: this.data.pickedMood.drink.cn
+      });
       wx.showToast({ title: "酒保调好了一杯" + this.data.pickedMood.drink.cn, icon: "none" });
     }, 1800);
   },
@@ -367,7 +371,13 @@ Page({
     this.addDrinkCount(m.drink.cn);
     this.setData({ lucky: true });
     setTimeout(() => {
-      this.setData({ lucky: false, drinkDetail: m.drink, pickedMood: m, pickedKey: m.key });
+      this.setData({
+        lucky: false,
+        drinkDetail: m.drink,
+        pickedMood: m,
+        pickedKey: m.key,
+        diaryDrink: m.drink.cn
+      });
       wx.showToast({ title: "命运抽中了一杯" + m.drink.cn, icon: "none" });
     }, 1600);
   },

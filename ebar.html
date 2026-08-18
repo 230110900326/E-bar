@@ -939,7 +939,7 @@ function luckyDraw(){
   el("drinkSlot").innerHTML='<div class="mixing"><div class="shaker" style="font-size:64px;line-height:1">🎲</div><div class="mixing-txt">命运正在洗牌…</div><div class="mixing-sub">猜猜今晚是哪一杯</div></div>';
   var mk=MOODS[Math.floor(Math.random()*MOODS.length)];
   cntAdd(mk.drink.cn);
-  setTimeout(function(){showDrink(mk);renderShelf();toast("命运抽中了一杯"+mk.drink.cn+"，请慢用")},1600);
+  setTimeout(function(){showDrink(mk);renderShelf();fillDiaryDrink(mk.drink.cn);toast("命运抽中了一杯"+mk.drink.cn+"，请慢用")},1600);
 }
 function showDrinkRequest(m){
   el("drinkSlot").innerHTML='<div class="order"><div class="o-mood">今晚心情：'+esc(m.key)+'</div><div class="o-drink">酒保推荐：'+esc(m.drink.cn)+'</div><div class="o-cost">调一杯消耗 '+MIX_COST+' 积分</div><button class="btn btn-pri" id="mixBtn">让酒保调一杯</button><div class="o-hint">当前积分：'+pointsGet()+' · 可去解忧酒馆投递烦恼赚积分</div></div>';
@@ -950,7 +950,11 @@ function doMix(m){
   pointsAdd(-MIX_COST,"调一杯·"+m.drink.cn);
   cntAdd(m.drink.cn);
   el("drinkSlot").innerHTML='<div class="mixing"><div class="shaker">'+shakerSVG()+'</div><div class="mixing-txt">酒保正在调酒…</div><div class="mixing-sub">'+esc(m.drink.cn)+'</div></div>';
-  var mk=m;setTimeout(function(){showDrink(mk);renderShelf();toast("酒保调好了一杯"+mk.drink.cn+"，请慢用")},1800);
+  var mk=m;setTimeout(function(){showDrink(mk);renderShelf();fillDiaryDrink(mk.drink.cn);toast("酒保调好了一杯"+mk.drink.cn+"，请慢用")},1800);
+}
+/* 调酒后自动把酒名填到日记的"今夜特调"输入框 */
+function fillDiaryDrink(cn){
+  var ipt=el("drinkName");if(ipt)ipt.value=cn;
 }
 function showDrink(m){
   var d=m.drink;
