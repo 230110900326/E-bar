@@ -37,7 +37,7 @@
 
 Pages 项目 → **Settings** → **Environment variables** → **Production**：
 ```
-HUNYUAN_API_KEY = sk-7Evgzf9eE7OlzE4HMbZZJ9lNigDiTerYdSzRXdOvkL1GTaWT
+HUNYUAN_API_KEY = sk-你的混元token（⚠️ 之前版本曾明文写 key 已泄露，请务必去混元控制台轮换新 key，只填这里，勿再写入文档）
 ```
 保存后点 **Create deployment** 重新部署一次生效。
 
