@@ -546,8 +546,8 @@ var LS_KEY = "wb_ebar_cache_v1";
 var SEED_KEY = "wb_ebar_seeded";
 var SHELF_KEY = "wb_ebar_shelf_v1";
 var CNT_KEY = "wb_ebar_drinkcnt_v1";
-/* AI 酒保代理：填 Cloudflare Worker URL（结尾不带 /），留空则用本地关键词兜底 */
-var BARTENDER_PROXY = "";
+/* AI 酒保代理：Cloudflare Pages 同域部署后为 /api/bartender；留空则用本地关键词兜底 */
+var BARTENDER_PROXY = "/api/bartender";
 /* 离线兜底示例数据（云端不可用时本地初始化用） */
 var SAMPLE_DATA = [
   {id:"sample_1",type:"解忧留言",mood:"疲惫",content:"周一加班到深夜，觉得自己像个机器",cure:"辛苦了，机器也会做梦的。今晚就做个好梦吧。",score:3,drink:"",status:"未释怀",date:"2026-08-17"},
