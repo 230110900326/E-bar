@@ -549,6 +549,11 @@ var SHELF_KEY = "wb_ebar_shelf_v1";
 var CNT_KEY = "wb_ebar_drinkcnt_v1";
 /* AI 酒保代理：Cloudflare Pages 同域部署后为 /api/bartender；留空则用本地关键词兜底 */
 var BARTENDER_PROXY = "/api/bartender";
+/* 云存档同步：填 Worker 地址与口令后启用（如 https://e-bar.xxx.workers.dev）；留空 = 纯本地模式 */
+var CLOUD_URL = "";
+var CLOUD_TOKEN = "";
+var CLOUD_META_KEY = "wb_ebar_cloud_meta_v1"; /* 本地记录最近写入时间戳，用于冲突合并 */
+var CLOUD_TIMEOUT = 5000;
 /* 离线兜底示例数据（云端不可用时本地初始化用） */
 var SAMPLE_DATA = [
   {id:"sample_1",type:"解忧留言",mood:"疲惫",content:"周一加班到深夜，觉得自己像个机器",cure:"辛苦了，机器也会做梦的。今晚就做个好梦吧。",score:3,drink:"",status:"未释怀",date:"2026-08-17"},
@@ -673,8 +678,89 @@ function cacheSet(arr){try{localStorage.setItem(LS_KEY,JSON.stringify(arr))}catc
 function seeded(){try{return !!localStorage.getItem(SEED_KEY)}catch(e){return true}}
 function markSeeded(){try{localStorage.setItem(SEED_KEY,"1")}catch(e){}}
 
+/* ============ 云存档同步（Cloudflare Worker + KV）============ */
+function markDirty(){try{localStorage.setItem(CLOUD_META_KEY,String(Date.now()))}catch(e){}}
+function lastDirty(){try{return parseInt(localStorage.getItem(CLOUD_META_KEY)||"0")||0}catch(e){return 0}}
+/* 打包本地全部状态 */
+function snapshotAll(){
+  var s={cache:cacheGet(),ledger:ledgerGet(),shelf:shelfGet(),cnt:cntGet(),ts:lastDirty()};
+  try{s.points=localStorage.getItem(POINTS_KEY)}catch(e){}
+  try{s.streak=localStorage.getItem("wb_ebar_streak")}catch(e){}
+  try{s.daily=localStorage.getItem("wb_ebar_daily")}catch(e){}
+  try{s.seeded=localStorage.getItem(SEED_KEY)}catch(e){}
+  try{s.theme=localStorage.getItem(THEME_KEY)}catch(e){}
+  return s;
+}
+/* 数组按 id 合并去重 */
+function mergeArr(a,b){
+  var m={},out=[];
+  (a||[]).concat(b||[]).forEach(function(r){if(r&&r.id&&!m[r.id]){m[r.id]=1;out.push(r)}});
+  if(out.length>200)out=out.slice(0,200);
+  return out;
+}
+function mergeObj(a,b){
+  var o={};for(var k in (a||{}))o[k]=a[k];for(var k in (b||{}))o[k]=b[k];return o;
+}
+/* 合并本地与云端：数组记录合并去重，标量取最近写入方，整体 ts 取大 */
+function mergeState(local,cloud){
+  if(!cloud)return local;
+  var lt=local.ts||0,ct=cloud.ts||0;
+  var base=lt>=ct?local:cloud;
+  return {
+    cache:mergeArr(local.cache,cloud.cache),
+    ledger:mergeArr(local.ledger,cloud.ledger),
+    shelf:mergeArr(local.shelf,cloud.shelf),
+    cnt:mergeObj(local.cnt,cloud.cnt),
+    points:base.points,streak:base.streak,daily:base.daily,seeded:base.seeded,theme:base.theme,
+    ts:Math.max(lt,ct)
+  };
+}
+/* 把合并结果写回本地（直接 setItem，避免触发 saveCloud 递归） */
+function applyState(s){
+  if(!s)return;
+  if(s.cache){try{localStorage.setItem(LS_KEY,JSON.stringify(s.cache))}catch(e){}}
+  if(s.points!==undefined&&s.points!==null){try{localStorage.setItem(POINTS_KEY,String(s.points))}catch(e){}}
+  if(s.ledger){try{localStorage.setItem(LEDGER_KEY,JSON.stringify(s.ledger))}catch(e){}}
+  if(s.streak){try{localStorage.setItem("wb_ebar_streak",s.streak)}catch(e){}}
+  if(s.shelf){try{localStorage.setItem(SHELF_KEY,JSON.stringify(s.shelf))}catch(e){}}
+  if(s.cnt){try{localStorage.setItem(CNT_KEY,JSON.stringify(s.cnt))}catch(e){}}
+  if(s.daily){try{localStorage.setItem("wb_ebar_daily",s.daily)}catch(e){}}
+  if(s.seeded){try{localStorage.setItem(SEED_KEY,s.seeded)}catch(e){}}
+  if(s.theme){try{localStorage.setItem(THEME_KEY,s.theme)}catch(e){}}
+}
+/* Worker 请求封装 */
+async function cloudFetch(path,method,body){
+  var opt={method:method||"GET",headers:{}};
+  if(CLOUD_TOKEN)opt.headers["x-sync-token"]=CLOUD_TOKEN;
+  if(body){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
+  var resp=await fetch(CLOUD_URL+path,opt);
+  if(!resp.ok)throw new Error("cloud "+resp.status);
+  return resp.json();
+}
+/* 一次完整同步：拉云端 → 合并 → 写本地 → 推云端（幂等，多端安全） */
+async function cloudSync(){
+  if(!CLOUD_URL)return;
+  try{
+    var cloud=await cloudFetch("/state");
+    var local=snapshotAll();
+    var merged=mergeState(local,cloud);
+    merged.ts=Date.now();
+    applyState(merged);
+    await cloudFetch("/state","PUT",merged);
+    markDirty();
+  }catch(e){console.warn("cloud sync fail",e)}
+}
+/* 写操作后防抖触发同步 */
+var _cloudTimer=null;
+function saveCloud(){
+  if(!CLOUD_URL)return;
+  markDirty();
+  clearTimeout(_cloudTimer);
+  _cloudTimer=setTimeout(function(){cloudSync()},1500);
+}
+
 /* 连续光顾 */
-function streakMark(){var k="wb_ebar_streak";var today=todayStr();var data={};try{data=JSON.parse(localStorage.getItem(k)||"{}")}catch(e){}var last=data.last;var cnt=data.cnt||0;if(last!==today){if(last){var ld=new Date(last);var td=new Date(today);var diff=Math.round((td-ld)/86400000);if(diff===1)cnt=cnt+1;else if(diff>1)cnt=1}else{cnt=1}data={last:today,cnt:cnt};try{localStorage.setItem(k,JSON.stringify(data))}catch(e){}}return cnt||1}
+function streakMark(){var k="wb_ebar_streak";var today=todayStr();var data={};try{data=JSON.parse(localStorage.getItem(k)||"{}")}catch(e){}var last=data.last;var cnt=data.cnt||0;if(last!==today){if(last){var ld=new Date(last);var td=new Date(today);var diff=Math.round((td-ld)/86400000);if(diff===1)cnt=cnt+1;else if(diff>1)cnt=1}else{cnt=1}data={last:today,cnt:cnt};try{localStorage.setItem(k,JSON.stringify(data))}catch(e){}saveCloud()}return cnt||1}
 
 /* 打卡勋章（置顶区称号用） */
 var BADGES=[
@@ -764,10 +850,10 @@ var POINTS_KEY="wb_ebar_points";
 var LEDGER_KEY="wb_ebar_ledger_v1";
 var MIX_COST=15;
 function pointsGet(){try{var v=localStorage.getItem(POINTS_KEY);if(v===null){localStorage.setItem(POINTS_KEY,"100");ledgerAdd("初始酒资","+100",100);return 100}return parseInt(v)||0}catch(e){return 100}}
-function pointsSet(v){try{localStorage.setItem(POINTS_KEY,String(v))}catch(e){}}
+function pointsSet(v){try{localStorage.setItem(POINTS_KEY,String(v))}catch(e){}saveCloud()}
 /* 积分流水：{t,label,delta,balance}[] */
 function ledgerGet(){try{return JSON.parse(localStorage.getItem(LEDGER_KEY)||"[]")}catch(e){return[]}}
-function ledgerAdd(label,delta,balance){try{var l=ledgerGet();l.unshift({t:todayStr(),label:label,delta:delta,balance:balance});if(l.length>200)l=l.slice(0,200);localStorage.setItem(LEDGER_KEY,JSON.stringify(l))}catch(e){}}
+function ledgerAdd(label,delta,balance){try{var l=ledgerGet();l.unshift({t:todayStr(),label:label,delta:delta,balance:balance});if(l.length>200)l=l.slice(0,200);localStorage.setItem(LEDGER_KEY,JSON.stringify(l))}catch(e){}saveCloud()}
 function pointsAdd(n,label){
   var c=pointsGet()+n;if(c<0)c=0;
   pointsSet(c);renderPoints();
@@ -775,15 +861,15 @@ function pointsAdd(n,label){
   return c;
 }
 function renderPoints(){var p=el("points");if(p){var num=p.querySelector(".num");if(num)num.textContent=pointsGet()}}
-function dailyBonus(){var k="wb_ebar_daily";var today=todayStr();try{var last=localStorage.getItem(k);if(last!==today){pointsAdd(10,"每日光顾");try{localStorage.setItem(k,today)}catch(e){}toast("每日光顾 +10 积分")}}catch(e){}}
+function dailyBonus(){var k="wb_ebar_daily";var today=todayStr();try{var last=localStorage.getItem(k);if(last!==today){pointsAdd(10,"每日光顾");try{localStorage.setItem(k,today)}catch(e){}saveCloud();toast("每日光顾 +10 积分")}}catch(e){}}
 
 /* 酒柜收藏 */
 function shelfGet(){try{return JSON.parse(localStorage.getItem(SHELF_KEY)||"[]")}catch(e){return[]}}
-function shelfSet(arr){try{localStorage.setItem(SHELF_KEY,JSON.stringify(arr))}catch(e){}}
+function shelfSet(arr){try{localStorage.setItem(SHELF_KEY,JSON.stringify(arr))}catch(e){}saveCloud()}
 function inShelf(cn){var s=shelfGet();for(var i=0;i<s.length;i++){if(s[i].cn===cn)return true}return false}
 /* 点单次数统计：{酒名: 次数} */
 function cntGet(){try{return JSON.parse(localStorage.getItem(CNT_KEY)||"{}")}catch(e){return{}}}
-function cntSet(m){try{localStorage.setItem(CNT_KEY,JSON.stringify(m))}catch(e){}}
+function cntSet(m){try{localStorage.setItem(CNT_KEY,JSON.stringify(m))}catch(e){}saveCloud()}
 function cntAdd(cn){var m=cntGet();m[cn]=(m[cn]||0)+1;cntSet(m)}
 function cntOf(cn){var m=cntGet();return m[cn]||0}
 function shelfAdd(d){
@@ -853,8 +939,8 @@ function normalize(row){
   };
 }
 async function addRec(props){
-  if(db){try{var r=await withTimeout(db.addRecord({databaseId:DB_ID,properties:props}),DB_TIMEOUT);var nid=r.id||r._id||(r.result&&r.result.id)||"";var rec=normalize2(props);rec.id=nid||("local_"+Date.now());ALL.unshift(rec);cacheSet(ALL);return rec}catch(e){console.warn(e);goOffline()}}
-  var rec=normalize2(props);rec.id="local_"+Date.now();ALL.unshift(rec);cacheSet(ALL);return rec;
+  if(db){try{var r=await withTimeout(db.addRecord({databaseId:DB_ID,properties:props}),DB_TIMEOUT);var nid=r.id||r._id||(r.result&&r.result.id)||"";var rec=normalize2(props);rec.id=nid||("local_"+Date.now());ALL.unshift(rec);cacheSet(ALL);saveCloud();return rec}catch(e){console.warn(e);goOffline()}}
+  var rec=normalize2(props);rec.id="local_"+Date.now();ALL.unshift(rec);cacheSet(ALL);saveCloud();return rec;
 }
 function normalize2(props){
   return {
@@ -867,11 +953,11 @@ function normalize2(props){
 async function updRec(id,props){
   if(db){try{await withTimeout(db.updateRecord({databaseId:DB_ID,recordId:id,properties:props}),DB_TIMEOUT)}catch(e){console.warn(e);goOffline()}}
   for(var j=0;j<ALL.length;j++){if(ALL[j].id===id){var n=normalize2(props);for(var kk in n){ALL[j][kk]=n[kk]}}}
-  cacheSet(ALL);
+  cacheSet(ALL);saveCloud();
 }
 async function delRec(id){
   if(db){try{await withTimeout(db.deleteRecord({databaseId:DB_ID,recordId:id}),DB_TIMEOUT)}catch(e){console.warn(e);goOffline()}}
-  ALL=ALL.filter(function(r){return r.id!==id});cacheSet(ALL);
+  ALL=ALL.filter(function(r){return r.id!==id});cacheSet(ALL);saveCloud();
 }
 
 /* ============ 渲染 ============ */
@@ -998,7 +1084,7 @@ var THEMES=[
   {id:"ocean",  name:"深海蓝调", desc:"深蓝青 · 冷静",    c:["#0a0f1d","#e8b04c","#3fa9c2"]}
 ];
 function themeGet(){try{return localStorage.getItem(THEME_KEY)||"night"}catch(e){return"night"}}
-function themeSet(id){try{localStorage.setItem(THEME_KEY,id)}catch(e){}}
+function themeSet(id){try{localStorage.setItem(THEME_KEY,id)}catch(e){}saveCloud()}
 function applyTheme(id){document.documentElement.setAttribute("data-theme",id)}
 function renderThemePicker(){
   var box=el("themeGrid");if(!box)return;
@@ -1290,6 +1376,8 @@ async function init(){
   el("mask").addEventListener("click",function(e){if(e.target===el("mask"))closeModal()});
   el("mOk").addEventListener("click",function(){if(typeof modalCb==="function")modalCb();closeModal()});
   await loadAll();
+  /* 云存档同步：拉云端合并 → 渲染；超时/失败静默降级到本地数据 */
+  if(CLOUD_URL){try{await withTimeout(cloudSync(),CLOUD_TIMEOUT)}catch(e){console.warn("cloud init sync skipped",e)}}
   renderAll();
   /* 数据量大时温和提示 */
   if(ALL.length>=30){toast("数据已积累 "+ALL.length+" 条，建议导出备份")}
