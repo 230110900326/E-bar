@@ -1244,6 +1244,18 @@ function smartMood(text){
   }
   return bs>0?best:null;
 }
+/* 轻量揣测：AI 也拿不准时，凭文字情绪倾向猜一个（永不落空） */
+function guessMood(text){
+  var t=String(text||"").toLowerCase();
+  var neg=["不","没","难","累","烦","差","哭","糟","惨","痛","闷","丧","撑","扛","慌","怕","想"],
+        pos=["好","开心","棒","爽","爱","喜欢","过","赢","中","成","喜","甜","美"];
+  var n=0,p=0;
+  for(var i=0;i<neg.length;i++){if(t.indexOf(neg[i])>=0)n++}
+  for(var j=0;j<pos.length;j++){if(t.indexOf(pos[j])>=0)p++}
+  if(p>n)return pick([MOODS[6],MOODS[9]]);      /* 开心 / 兴奋 */
+  if(n>0)return pick([MOODS[0],MOODS[1],MOODS[2],MOODS[4]]); /* 烦闷/失落/焦虑/疲惫 */
+  return pick(MOODS);
+}
 /* AI 心情兜底：关键词没读懂时，让混元 AI 从 10 类里选一个 */
 async function aiMood(text){
   var url="";
@@ -1261,22 +1273,23 @@ async function aiMood(text){
     return null;
   }catch(e){return null}
 }
-/* 输入心情 → 智能推荐一杯（关键词优先，AI 兜底，随机保底） */
+/* 输入心情 → 智能推荐一杯（关键词优先，AI 兜底，揣测保底，永不说不懂） */
 async function smartOrder(){
   var v=(el("moodInput").value||"").trim();
   if(!v){toast("先说说你现在的心情吧");return}
   var m=smartMood(v);
+  var from="kw";
   if(!m){
     toast("让我叫酒保细品一下…");
     m=await aiMood(v);
+    if(m){from="ai"}else{m=guessMood(v);from="guess"}
   }
-  if(!m){toast("没完全读懂你，先请你喝一杯随机的");luckyDraw();return}
   var g=el("moodGrid");
   g.querySelectorAll(".mood").forEach(function(x){x.classList.remove("picked")});
   var tag=g.querySelector('.mood[data-idx="'+MOODS.indexOf(m)+'"]');
   if(tag)tag.classList.add("picked");
   el("moodInput").value="";
-  showDrinkRequest(m,smartMood(v)?"我猜你今晚需要":"AI 酒保说，你今晚需要");
+  showDrinkRequest(m,"我猜你今晚需要");
 }
 function buildMoods(){
   var g=el("moodGrid");var html="";

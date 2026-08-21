@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: "system", content: "你是「夜半微醺」电子酒吧的调酒师。用户会描述自己当下的心情，请从这 10 个心情类别中选出最匹配的一个。只输出类别名本身，不要输出任何其他文字、标点或解释。10 个类别：" + MOOD_LIST.join("、") },
+          { role: "system", content: "你是「夜半微醺」电子酒吧的调酒师。用户会描述自己当下的心情，请从这 10 个心情类别中选出最匹配的一个。只输出类别名本身，不要输出任何其他文字、标点或解释。如果用户描述模糊或无法确定，请根据直觉和文字里的情绪倾向选一个最接近的，绝不允许输出'无法判断'之类的话。10 个类别：" + MOOD_LIST.join("、") },
           { role: "user", content: text },
         ],
         stream: false,
