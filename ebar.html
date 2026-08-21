@@ -1244,18 +1244,39 @@ function smartMood(text){
   }
   return bs>0?best:null;
 }
-/* 输入心情 → 智能推荐一杯 */
-function smartOrder(){
+/* AI 心情兜底：关键词没读懂时，让混元 AI 从 10 类里选一个 */
+async function aiMood(text){
+  var url="";
+  if(CLOUD_URL)url=CLOUD_URL+"/mood";
+  else if(BARTENDER_PROXY&&BARTENDER_PROXY.indexOf("workers.dev")>=0)url=BARTENDER_PROXY+"/mood";
+  if(!url)return null;
+  try{
+    var opt={method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text})};
+    if(CLOUD_URL&&CLOUD_TOKEN)opt.headers["x-sync-token"]=CLOUD_TOKEN;
+    var resp=await withTimeout(fetch(url,opt),6000);
+    if(!resp.ok)return null;
+    var j=await resp.json();
+    if(!j||!j.mood)return null;
+    for(var i=0;i<MOODS.length;i++){if(MOODS[i].key===j.mood)return MOODS[i]}
+    return null;
+  }catch(e){return null}
+}
+/* 输入心情 → 智能推荐一杯（关键词优先，AI 兜底，随机保底） */
+async function smartOrder(){
   var v=(el("moodInput").value||"").trim();
   if(!v){toast("先说说你现在的心情吧");return}
   var m=smartMood(v);
+  if(!m){
+    toast("让我叫酒保细品一下…");
+    m=await aiMood(v);
+  }
   if(!m){toast("没完全读懂你，先请你喝一杯随机的");luckyDraw();return}
   var g=el("moodGrid");
   g.querySelectorAll(".mood").forEach(function(x){x.classList.remove("picked")});
   var tag=g.querySelector('.mood[data-idx="'+MOODS.indexOf(m)+'"]');
   if(tag)tag.classList.add("picked");
   el("moodInput").value="";
-  showDrinkRequest(m,"我猜你今晚需要");
+  showDrinkRequest(m,smartMood(v)?"我猜你今晚需要":"AI 酒保说，你今晚需要");
 }
 function buildMoods(){
   var g=el("moodGrid");var html="";

@@ -25,6 +25,7 @@ const MODEL = "hy3";
 const SYSTEM_PROMPT = "你是「夜半微醺」电子酒吧的 AI 酒保。用温暖、克制、像朋友一样的语气，针对用户当下的具体烦恼给一句真诚的回应，不超过 60 字。不要说教，不要套话术，要接住对方此刻的情绪，可以借一句酒或夜晚的意象。";
 
 const KV_KEY = "ebar_state_v1";
+const MOOD_LIST = ["烦闷", "失落", "焦虑", "孤独", "疲惫", "迷茫", "开心", "思念", "委屈", "兴奋"];
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +89,46 @@ export default {
       }
 
       return json({ error: "method_not_allowed" }, 405);
+    }
+
+    // ---- AI 心情识别（关键词没读懂时的智能兜底）----
+    if (path === "/mood" && request.method === "POST") {
+      if (!authOK) return json({ mood: null, reason: "unauthorized" });
+      const apiKey = env && env.HUNYUAN_API_KEY;
+      if (!apiKey) return json({ mood: null, reason: "no_key" });
+
+      let text = "";
+      try {
+        const body = await request.json();
+        text = (body && body.text || "").toString().trim();
+      } catch (e) { return json({ mood: null }); }
+      if (!text) return json({ mood: null });
+
+      try {
+        const resp = await fetch(HUNYUAN_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey,
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: [
+              { role: "system", content: "你是「夜半微醺」电子酒吧的调酒师。用户会描述自己当下的心情，请从这 10 个心情类别中选出最匹配的一个。只输出类别名本身，不要输出任何其他文字、标点或解释。10 个类别：" + MOOD_LIST.join("、") },
+              { role: "user", content: text },
+            ],
+            stream: false,
+          }),
+        });
+
+        if (!resp.ok) return json({ mood: null });
+        const j = await resp.json();
+        const ans = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content || "").trim();
+        const mood = MOOD_LIST.indexOf(ans) >= 0 ? ans : (MOOD_LIST.find(function (m) { return ans.indexOf(m) >= 0 }) || null);
+        return json({ mood: mood });
+      } catch (e) {
+        return json({ mood: null });
+      }
     }
 
     // ---- 混元 AI 酒保 ----
