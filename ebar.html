@@ -138,6 +138,12 @@
   .ai-tip p{font-size:12px;color:var(--ink-2);margin-top:2px;line-height:1.65}
 
   /* 心情选择 */
+  .mood-smart{display:flex;gap:8px;margin-bottom:12px}
+  .mood-smart input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    color:var(--ink);font-size:14px;outline:none;transition:.2s;min-width:0}
+  .mood-smart input::placeholder{color:var(--ink-3)}
+  .mood-smart input:focus{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-glow)}
+  .mood-smart .btn{white-space:nowrap;flex-shrink:0}
   .mood-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
   .mood{padding:16px 8px;border-radius:13px;background:var(--card);border:1px solid var(--line);
     cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
@@ -428,6 +434,13 @@
     <div class="section-title">今日推荐<span class="line"></span></div>
     <div class="today-card" id="todayCard"></div>
     <div class="section-title">今晚，你是什么心情？<span class="line"></span></div>
+    <div class="mood-smart">
+      <input type="text" id="moodInput" maxlength="60" placeholder="直接说出来，比如：今天加班好累 / 和对象吵架了 / 拿到 offer 了！">
+      <button class="btn btn-pri" id="moodGo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        为我选一杯
+      </button>
+    </div>
     <div class="mood-grid" id="moodGrid"></div>
     <div id="drinkSlot"></div>
     <div class="section-title">今晚这一杯<span class="line"></span></div>
@@ -1208,6 +1221,42 @@ function wrapCure(s){
 function renderAll(){renderOwe();renderTalk();renderDiary();renderTrend();renderShelf();renderStats()}
 
 /* ============ 今夜特调 ============ */
+/* 心情智能识别：口语关键词 → 匹配最贴近的心情 */
+var MOOD_KW={
+  烦闷:["烦","闷","气","火","暴躁","恼火","不爽","心烦","堵","生气","讨厌","吵架","吵","怼","无语","气死","恶心","烦躁"],
+  失落:["失落","低落","难过","伤心","想哭","哭","失败","挫折","丧","emo","郁闷","沮丧","受伤","灰心","emo了"],
+  焦虑:["焦虑","紧张","压力","慌","担心","怕","考试","面试","失眠","赶","着急","不安","心慌","考前","ddl","deadline"],
+  孤独:["孤独","孤单","寂寞","一个人","没人","想找人","空虚","没人陪","独自","没人懂"],
+  疲惫:["累","疲惫","困","加班","熬夜","没力气","透支","乏","搬砖","扛不住","撑不住","好累","没精神"],
+  迷茫:["迷茫","不知道","方向","困惑","迷路","选择","犹豫","纠结","该不该","怎么办","要不要","看不清"],
+  开心:["开心","高兴","快乐","爽","棒","庆祝","成功","升职","加薪","中奖","告白","脱单","拿offer","考过","过啦","赚到","好耶","太棒"],
+  思念:["想念","思念","想家","想谁","怀念","异地","妈妈","外婆","奶奶","好久不见","睹物思人","想他","想她"],
+  委屈:["委屈","冤枉","被骂","憋屈","被欺负","误会","背锅","被说","白眼","吃力不讨好"],
+  兴奋:["兴奋","激动","high","热血","上头","狂欢","惊喜","中了","冲","燃","起飞","炸裂"]
+};
+function smartMood(text){
+  var t=String(text||"").toLowerCase();
+  var best=null,bs=0;
+  for(var i=0;i<MOODS.length;i++){
+    var kws=MOOD_KW[MOODS[i].key]||[];var s=0;
+    for(var j=0;j<kws.length;j++){if(t.indexOf(kws[j])>=0)s++}
+    if(s>bs){bs=s;best=MOODS[i]}
+  }
+  return bs>0?best:null;
+}
+/* 输入心情 → 智能推荐一杯 */
+function smartOrder(){
+  var v=(el("moodInput").value||"").trim();
+  if(!v){toast("先说说你现在的心情吧");return}
+  var m=smartMood(v);
+  if(!m){toast("没完全读懂你，先请你喝一杯随机的");luckyDraw();return}
+  var g=el("moodGrid");
+  g.querySelectorAll(".mood").forEach(function(x){x.classList.remove("picked")});
+  var tag=g.querySelector('.mood[data-idx="'+MOODS.indexOf(m)+'"]');
+  if(tag)tag.classList.add("picked");
+  el("moodInput").value="";
+  showDrinkRequest(m,"我猜你今晚需要");
+}
 function buildMoods(){
   var g=el("moodGrid");var html="";
   MOODS.forEach(function(m,idx){
@@ -1240,8 +1289,9 @@ function luckyDraw(){
   cntAdd(mk.drink.cn);
   setTimeout(function(){showDrink(mk);renderShelf();fillDiaryDrink(mk.drink.cn);toast("命运抽中了一杯"+mk.drink.cn+"，请慢用")},1600);
 }
-function showDrinkRequest(m){
-  el("drinkSlot").innerHTML='<div class="order"><div class="o-mood">今晚心情：'+esc(m.key)+'</div><div class="o-drink">酒保推荐：'+esc(m.drink.cn)+'</div><div class="o-cost">调一杯消耗 '+MIX_COST+' 积分</div><button class="btn btn-pri" id="mixBtn">让酒保调一杯</button><div class="o-hint">当前积分：'+pointsGet()+' · 可去解忧酒馆投递烦恼赚积分</div></div>';
+function showDrinkRequest(m,prefix){
+  var head=prefix?esc(prefix)+"一杯" : "今晚心情："+esc(m.key);
+  el("drinkSlot").innerHTML='<div class="order"><div class="o-mood">'+head+'</div><div class="o-drink">酒保推荐：'+esc(m.drink.cn)+'</div><div class="o-cost">调一杯消耗 '+MIX_COST+' 积分</div><button class="btn btn-pri" id="mixBtn">让酒保调一杯</button><div class="o-hint">当前积分：'+pointsGet()+' · 可去解忧酒馆投递烦恼赚积分</div></div>';
   var b=el("mixBtn");if(b){b.addEventListener("click",function(){doMix(m)})}
 }
 function doMix(m){
@@ -1365,6 +1415,8 @@ async function init(){
   dailyBonus();
   renderToday();
   buildMoods();
+  el("moodGo").addEventListener("click",smartOrder);
+  el("moodInput").addEventListener("keydown",function(e){if(e.key==="Enter")smartOrder()});
   bindTabs();
   el("score").addEventListener("input",function(){el("scoreVal").textContent=this.value});
   el("talkSend").addEventListener("click",sendTalk);
